@@ -5,6 +5,21 @@ const ADMIN_PASSWORD = 'fiscoadmin2025';
 
 const SYSTEM_PROMPT = "Tu es FiscoBot, assistant fiscal expert spécialisé dans le Code Général des Impôts du Togo (OTR 2025), le Livre des Procédures Fiscales, OHADA et SYSCOHADA révisé 2017.\n\nRÈGLES ABSOLUES :\n1. Réponds TOUJOURS en français professionnel.\n2. Appuie-toi UNIQUEMENT sur les extraits fournis.\n3. Cite toujours les numéros d'articles exacts.\n4. Ne jamais inventer taux, délais ou montants.\n\nFORMAT : ## Titre\n**Principe** : contexte\n**Détails** :\n• point\n**📌 Références** : Art. XX";
 
+async function extractPdfText(file) {
+  const pdfjsLib = window['pdfjs-dist/build/pdf'];
+  if (!pdfjsLib) throw new Error('PDF.js non chargé');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(' ') + '\n';
+  }
+  return text;
+}
+
 export default function FiscoBot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -14,6 +29,7 @@ export default function FiscoBot() {
   const [showDocs, setShowDocs] = useState(false);
   const [uploadMsg, setUploadMsg] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [pdfLoaded, setPdfLoaded] = useState(false);
   const endRef = useRef(null);
   const inputRef = useRef(null);
   const fileRef = useRef(null);
@@ -23,9 +39,40 @@ export default function FiscoBot() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === ADMIN_PASSWORD) setIsAdmin(true);
+    // Charger PDF.js depuis CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    script.onload = () => setPdfLoaded(true);
+    document.head.appendChild(script);
   }, []);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, status]);
+
+  const handleFiles = async (files) => {
+    let added = '';
+    let count = 0;
+    setUploadMsg('⏳ Traitement en cours...');
+    for (const f of files) {
+      try {
+        if (f.name.endsWith('.pdf')) {
+          const text = await extractPdfText(f);
+          added += '\n\n=== ' + f.name + ' ===\n' + text;
+          count++;
+        } else if (f.name.endsWith('.txt')) {
+          added += '\n\n=== ' + f.name + ' ===\n' + (await f.text());
+          count++;
+        }
+      } catch(e) {
+        setUploadMsg('❌ Erreur: ' + f.name);
+        return;
+      }
+    }
+    if (added) {
+      setExtraDocs(p => p + added);
+      setUploadMsg('✓ ' + count + ' fichier(s) chargé(s)');
+      setTimeout(() => setUploadMsg(null), 3000);
+    }
+  };
 
   const send = async (q) => {
     const question = q || input.trim();
@@ -37,7 +84,7 @@ export default function FiscoBot() {
     setMessages(prev => [...prev, { role: 'user', content: question }]);
     const hits = searchKB(question, 4);
     const context = hits.length ? 'EXTRAITS CGI TOGO 2025 :\n\n' + hits.join('\n\n---\n\n') : 'Aucun extrait trouvé.';
-    const full = extraDocs.trim() ? context + '\n\n=== DOCS ADMIN ===\n' + extraDocs.slice(0,6000) : context;
+    const full = extraDocs.trim() ? context + '\n\n=== DOCS ADMIN ===\n' + extraDocs.slice(0,8000) : context;
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -72,19 +119,27 @@ export default function FiscoBot() {
         </div>
         <div style={{display:'flex',gap:7,alignItems:'center'}}>
           <div style={{fontSize:11,color:'#64c478',background:'rgba(100,196,120,.1)',border:'1px solid rgba(100,196,120,.25)',borderRadius:12,padding:'3px 10px'}}>✓ {KB_N} sections</div>
-          {isAdmin && (
-            <button onClick={()=>setShowDocs(p=>!p)} style={{padding:'4px 10px',border:`1px solid ${gf(.3)}`,borderRadius:12,background:showDocs?gf(.2):'transparent',color:'#c4a464',cursor:'pointer',fontSize:11}}>📌 Admin Docs</button>
-          )}
+          {isAdmin && <button onClick={()=>setShowDocs(p=>!p)} style={{padding:'4px 10px',border:`1px solid ${gf(.3)}`,borderRadius:12,background:showDocs?gf(.2):'transparent',color:'#c4a464',cursor:'pointer',fontSize:11}}>📌 Admin Docs</button>}
         </div>
       </div>
-      {isAdmin && showDocs && (<div style={{background:'rgba(196,164,100,.05)',borderBottom:`1px solid ${gf(.2)}`,padding:'10px 20px'}}>
-        <div style={{fontSize:11,color:gold,marginBottom:6}}>🔒 Mode Admin — Documents enrichis (invisibles aux utilisateurs)</div>
-        <div onClick={()=>fileRef.current?.click()} style={{border:`2px dashed ${gf(.4)}`,borderRadius:8,padding:'12px',textAlign:'center',cursor:'pointer',fontSize:12,color:gf(.8)}}>
-          <input ref={fileRef} type="file" accept=".txt" multiple onChange={async e=>{let a='';for(const f of e.target.files){if(f.name.endsWith('.txt'))a+='\n\n=== '+f.name+' ===\n'+(await f.text());}if(a){setExtraDocs(p=>p+a);setUploadMsg('✓ '+e.target.files.length+' fichier(s) chargé(s)');setTimeout(()=>setUploadMsg(null),3000);}e.target.value='';}} style={{display:'none'}}/>
-          📂 Cliquer pour ajouter des documents (.txt) {uploadMsg&&<span style={{color:'#64c478',marginLeft:8}}>{uploadMsg}</span>}
+      {isAdmin && showDocs && (
+        <div style={{background:'rgba(196,164,100,.05)',borderBottom:`1px solid ${gf(.2)}`,padding:'12px 20px'}}>
+          <div style={{fontSize:11,color:gold,marginBottom:8}}>🔒 Mode Admin — Formats acceptés : PDF et TXT</div>
+          <div onClick={()=>fileRef.current?.click()} style={{border:`2px dashed ${gf(.4)}`,borderRadius:8,padding:'14px',textAlign:'center',cursor:'pointer',fontSize:12,color:gf(.8),transition:'background .2s'}}
+            onMouseEnter={e=>e.currentTarget.style.background='rgba(196,164,100,.08)'}
+            onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+            <input ref={fileRef} type="file" accept=".pdf,.txt" multiple onChange={e=>{handleFiles(Array.from(e.target.files));e.target.value='';}} style={{display:'none'}}/>
+            <div style={{fontSize:20,marginBottom:4}}>📂</div>
+            <div>Cliquer pour ajouter des documents</div>
+            <div style={{fontSize:10,color:gf(.5),marginTop:3}}>PDF et TXT supportés — {pdfLoaded ? '✓ PDF.js prêt' : '⏳ Chargement PDF.js...'}</div>
+            {uploadMsg && <div style={{marginTop:6,color:'#64c478',fontWeight:'bold'}}>{uploadMsg}</div>}
+          </div>
+          {extraDocs && <div style={{fontSize:10,color:gf(.6),marginTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span>📚 {extraDocs.length.toLocaleString()} caractères chargés dans la mémoire</span>
+            <span onClick={()=>setExtraDocs('')} style={{cursor:'pointer',color:'#e07070',textDecoration:'underline'}}>Tout effacer</span>
+          </div>}
         </div>
-        {extraDocs && <div style={{fontSize:10,color:gf(.6),marginTop:4}}>{extraDocs.length} caractères chargés — <span onClick={()=>setExtraDocs('')} style={{cursor:'pointer',color:'#e07070'}}>Effacer</span></div>}
-      </div>)}
+      )}
       <div style={{flex:1,display:'flex',flexDirection:'column',maxWidth:820,width:'100%',margin:'0 auto',padding:'0 16px'}}>
         <div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:14,padding:'14px 0',minHeight:300,maxHeight:'60vh'}}>
           {messages.length===0?(
