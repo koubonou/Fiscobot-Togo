@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { searchKB, KB_N } from '../lib/kb';
 import { searchKB2025, KB_2025_N } from '../lib/kb_cahier2025';
+import { searchKBLF2026, KB_LF2026_N } from '../lib/kb_lf2026';
 
 const ADMIN_PASSWORD = 'fiscoadmin2025';
 
@@ -45,15 +46,19 @@ const EXPAND = {
   'ohada': 'OHADA SYSCOHADA actes uniformes comptabilit\u00e9',
   'entreprenant': 'r\u00e9gime entreprenant micro-entreprise',
   'transfert': 'prix de transfert parties li\u00e9es',
-  'enregistrement': 'droits enregistrement actes notari\u00e9s',
-  'tvm': 'TVM taxe v\u00e9hicules moteur suspension 2025',
+  'enregistrement': 'droits enregistrement actes notari\u00e9s foncier',
+  'tvm': 'TVM taxe v\u00e9hicules moteur suspension',
   'delai': 'd\u00e9lai d\u00e9claration paiement',
   'd\u00e9lai': 'd\u00e9lai d\u00e9claration paiement',
   'numerique': 'plateforme \u00e9lectronique e-commerce internet NIF',
   'seuil': 'seuil TVA assujettissement 100 millions FCFA',
   'accise': 'droits accises boissons sucr\u00e9es alcools',
-  'agricole': 'mat\u00e9riel agricole exon\u00e9ration 2025',
-  'etat financier': '\u00e9tats financiers d\u00e9finitifs provisoires',
+  'agricole': 'mat\u00e9riel agricole exon\u00e9ration \u00e9levage p\u00eache',
+  'facture': 'facturation \u00e9lectronique certifi\u00e9e tra\u00e7abilit\u00e9',
+  'handicap': 'cr\u00e9dit imp\u00f4t employ\u00e9 handicap\u00e9 120000',
+  'foncier': 'droits enregistrement foncier valeur v\u00e9nale',
+  'contr\u00f4le': 'contr\u00f4le fiscal d\u00e9lai proc\u00e9dure redressement',
+  'jeux': 'paris jeux hasard retenue 5% 500000',
 };
 
 function expandQuery(q) {
@@ -63,7 +68,7 @@ function expandQuery(q) {
   return extras.length ? q + ' ' + extras.join(' ') : q;
 }
 
-const SYSTEM_PROMPT = 'Tu es FiscoBot, assistant fiscal expert sp\u00e9cialis\u00e9 dans le Code G\u00e9n\u00e9ral des Imp\u00f4ts du Togo (OTR 2025), le Livre des Proc\u00e9dures Fiscales, OHADA et SYSCOHADA r\u00e9vis\u00e9 2017.\n\nR\u00c8GLES ABSOLUES :\n1. R\u00e9ponds TOUJOURS en fran\u00e7ais professionnel.\n2. Appuie-toi UNIQUEMENT sur les extraits fournis.\n3. Cite toujours les num\u00e9ros d\'articles exacts.\n4. Ne jamais inventer taux, d\u00e9lais ou montants.\n\nFORMAT : ## Titre\n**Principe** : contexte\n**D\u00e9tails** :\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences** : Art. XX';
+const SYSTEM_PROMPT = 'Tu es FiscoBot, assistant fiscal expert sp\u00e9cialis\u00e9 dans le Code G\u00e9n\u00e9ral des Imp\u00f4ts du Togo (OTR 2025), le Livre des Proc\u00e9dures Fiscales, la Loi de Finances 2025 et la Loi de Finances 2026, OHADA et SYSCOHADA r\u00e9vis\u00e9 2017.\n\nR\u00c8GLES ABSOLUES :\n1. R\u00e9ponds TOUJOURS en fran\u00e7ais professionnel.\n2. Appuie-toi UNIQUEMENT sur les extraits fournis.\n3. Cite toujours les num\u00e9ros d\'articles exacts.\n4. Ne jamais inventer taux, d\u00e9lais ou montants.\n\nFORMAT : ## Titre\n**Principe** : contexte\n**D\u00e9tails** :\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences** : Art. XX';
 
 async function extractPdfText(file) {
   const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -94,7 +99,7 @@ export default function FiscoBot() {
   const inputRef = useRef(null);
   const fileRef = useRef(null);
   const timerRef = useRef(null);
-  const TOTAL_N = KB_N + KB_2025_N;
+  const TOTAL_N = KB_N + KB_2025_N + KB_LF2026_N;
   const phases = ['Recherche dans le CGI Togo 2025...', 'Analyse des articles...', T.redaction];
   const suggs = ['P\u00e9nalit\u00e9s retard d\u00e9claration ?', 'Taux IS au Togo ?', 'D\u00e9lais d\u00e9claration TVA ?', 'Retenue source salaires ?', 'Rescrit fiscal OTR ?', 'R\u00e9gime entreprenant ?'];
 
@@ -128,10 +133,11 @@ export default function FiscoBot() {
     timerRef.current = setInterval(() => setPhase(p => (p + 1) % phases.length), 2200);
     setMessages(prev => [...prev, { role: 'user', content: question }]);
     const expanded = expandQuery(question);
-    const hitsMain = searchKB(expanded, 4);
+    const hitsMain = searchKB(expanded, 3);
     const hits2025 = searchKB2025(expanded, 2);
-    const hits = [...hitsMain, ...hits2025];
-    const context = hits.length ? 'EXTRAITS CGI TOGO 2025 :\n\n' + hits.join('\n\n---\n\n') : 'Aucun extrait trouv\u00e9.';
+    const hits2026 = searchKBLF2026(expanded, 2);
+    const hits = [...hitsMain, ...hits2025, ...hits2026];
+    const context = hits.length ? 'EXTRAITS CGI TOGO 2025-2026 :\n\n' + hits.join('\n\n---\n\n') : 'Aucun extrait trouv\u00e9.';
     const full = extraDocs.trim() ? context + '\n\n=== DOCS ADMIN ===\n' + extraDocs.slice(0, 8000) : context;
     const userMsg = full + '\n\n---\n\nQuestion : ' + question;
     try {
@@ -177,7 +183,7 @@ export default function FiscoBot() {
       <div style={{borderBottom:`1px solid ${gf(.3)}`,padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(0,0,0,.35)'}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <div style={{width:36,height:36,background:'linear-gradient(135deg,#c4a464,#8b6914)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{IC.scale}</div>
-          <div><div style={{fontWeight:'bold',fontSize:15}}>FiscoBot Togo</div><div style={{fontSize:9,color:gold,letterSpacing:'1.5px',textTransform:'uppercase'}}>CGI OTR 2025 {IC.dot} LPF {IC.dot} OHADA {IC.dot} SYSCOHADA</div></div>
+          <div><div style={{fontWeight:'bold',fontSize:15}}>FiscoBot Togo</div><div style={{fontSize:9,color:gold,letterSpacing:'1.5px',textTransform:'uppercase'}}>CGI OTR 2025 {IC.dot} LPF {IC.dot} LF2026 {IC.dot} OHADA</div></div>
         </div>
         <div style={{display:'flex',gap:7,alignItems:'center'}}>
           <div style={{fontSize:11,color:'#64c478',background:'rgba(100,196,120,.1)',border:'1px solid rgba(100,196,120,.25)',borderRadius:12,padding:'3px 10px'}}>{IC.check} {TOTAL_N} sections</div>
@@ -204,7 +210,7 @@ export default function FiscoBot() {
               <div style={{textAlign:'center'}}>
                 <div style={{fontSize:32,marginBottom:8}}>{IC.scale}</div>
                 <div style={{fontSize:17,color:gold,marginBottom:4}}>Mon Comptable</div>
-                <div style={{fontSize:13,color:'#8a9ab0',maxWidth:440,lineHeight:1.6}}><strong style={{color:'#c4a464'}}>CGI Togo 2025</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LPF</strong> {IC.dot} {TOTAL_N} {T.indexees}</div>
+                <div style={{fontSize:13,color:'#8a9ab0',maxWidth:440,lineHeight:1.6}}><strong style={{color:'#c4a464'}}>CGI Togo</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LF 2025-2026</strong> {IC.dot} {TOTAL_N} {T.indexees}</div>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,width:'100%',maxWidth:580}}>
                 {suggs.map((q, i) => (<button key={i} onClick={()=>send(q)} style={{padding:'8px 11px',background:'rgba(255,255,255,.03)',border:`1px solid ${gf(.2)}`,borderRadius:8,color:'#b8a88a',cursor:'pointer',fontSize:12,textAlign:'left',lineHeight:1.4}}>{IC.arrow} {q}</button>))}
@@ -230,9 +236,9 @@ export default function FiscoBot() {
             <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder={T.placeholder} rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
             <button onClick={()=>send()} disabled={status==='loading'||status==='streaming'||!input.trim()} style={{padding:'10px 16px',background:!input.trim()||status==='loading'||status==='streaming'?gf(.1):'linear-gradient(135deg,#c4a464,#8b6914)',border:'none',borderRadius:10,color:!input.trim()||status==='loading'||status==='streaming'?'#5a6a7a':'#fff',cursor:'pointer',fontSize:16,flexShrink:0}}>{IC.send}</button>
           </div>
-          <div style={{fontSize:10,color:'#4a5a6a',marginTop:6,textAlign:'center'}}>FiscoBot Togo {IC.dot} CGI OTR 2025 {IC.dot} {TOTAL_N} sections</div>
+          <div style={{fontSize:10,color:'#4a5a6a',marginTop:6,textAlign:'center'}}>FiscoBot Togo {IC.dot} CGI {IC.dot} LF 2025/2026 {IC.dot} {TOTAL_N} sections</div>
         </div>
       </div>
     </div>
   );
-}
+  }
