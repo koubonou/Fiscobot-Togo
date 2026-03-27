@@ -333,7 +333,7 @@ export default function LexIA() {
             <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder={T.placeholder} rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
             <button onClick={()=>send()} disabled={status==='loading'||status==='streaming'||!input.trim()} style={{padding:'10px 16px',background:!input.trim()||status==='loading'||status==='streaming'?gf(.1):'linear-gradient(135deg,#c4a464,#8b6914)',border:'none',borderRadius:10,color:!input.trim()||status==='loading'||status==='streaming'?'#5a6a7a':'#fff',cursor:'pointer',fontSize:16,flexShrink:0}}>{IC.send}</button>
           </div>
-          <div style={{fontSize:10,color:'#4a5a6a',marginTop:6,textAlign:'center'}}>{IC.us} {IC.tg} {T.footer}</div>
+          <div style={{fontSize:10,color:'#c4a464',marginTop:6,textAlign:'center'}}>{IC.us} {IC.tg} {T.footer}</div>
         </div>
       </div>
     </div>
