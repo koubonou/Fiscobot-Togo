@@ -164,7 +164,7 @@ export default function FiscoBot() {
         </div>
         <div style={{borderTop:`1px solid ${gf(.15)}`,paddingTop:12,paddingBottom:14}}>
           {messages.length>0&&<div style={{display:'flex',justifyContent:'flex-end',marginBottom:6}}><button onClick={()=>setMessages([])} style={{background:'none',border:'none',color:'#8a9ab0',cursor:'pointer',fontSize:11}}>âº Nouvelle conversation</button></div>}
-          <div style={{display:'flex',gap:8,alignItems:'flex-end'}}>
+          <div style={{display:'flex',gap:8,alignItemsh:'flex-end'}}>
             <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder="PÃ©nalitÃ©s ? Taux IS ? Rescrit fiscal ?" rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
             <button onClick={()=>send()} disabled={status==='loading'||!input.trim()} style={{padding:'10px 16px',background:!input.trim()||status==='loading'?gf(.1):'linear-gradient(135deg,#c4a464,#8b6914)',border:'none',borderRadius:10,color:!input.trim()||status==='loading'?'#5a6a7a':'#fff',cursor:'pointer',fontSize:16,flexShrink:0}}>â¤</button>
           </div>
