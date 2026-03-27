@@ -22,10 +22,12 @@ const IC = {
   reset:  '\u21ba',
   dot:    '\u00b7',
   globe:  '\ud83c\udf10',
+  us:     '\ud83c\uddfa\ud83c\uddf8',
+  tg:     '\ud83c\uddf9\ud83c\uddec',
 };
 
 const T = {
-  placeholder: 'P\u00e9nalit\u00e9s ? Taux IS ? Classe 6 SYSCOHADA ?',
+  placeholder: 'Posez votre question fiscale ou comptable\u2026',
   indexees:    'sections index\u00e9es',
   modeAdmin:   'Mode Admin \u2014 Formats accept\u00e9s : PDF et TXT',
   pdfSupport:  'PDF et TXT support\u00e9s \u2014 ',
@@ -34,6 +36,12 @@ const T = {
   chars:       'caract\u00e8res charg\u00e9s',
   nouvelle:    'Nouvelle conversation',
   redaction:   'R\u00e9daction...',
+  heroTitle:   'Votre expert fiscal et comptable IA',
+  heroSub:     'CGI 2025 \u00b7 LF2026 \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
+  appName:     'LexIA',
+  appSub:      'Falcon Audit & Consulting (FAC)',
+  badgeIA:     'IA \u00b7 Togo 2026',
+  footer:      'LexIA by Falcon Accounting & Tax Solutions \u00b7 USA',
 };
 
 const EXPAND = {
@@ -75,7 +83,7 @@ function expandQuery(q) {
   return extras.length ? q + ' ' + extras.join(' ') : q;
 }
 
-const SYSTEM_PROMPT = 'Tu es FiscoBot, assistant fiscal et comptable expert sp\u00e9cialis\u00e9 dans le Code G\u00e9n\u00e9ral des Imp\u00f4ts du Togo (OTR 2025), le Livre des Proc\u00e9dures Fiscales, la Loi de Finances 2025, la Loi de Finances 2026, le Plan Comptable SYSCOHADA R\u00e9vis\u00e9 2017, OHADA et SYSCOHADA.\n\nR\u00c8GLES ABSOLUES :\n1. R\u00e9ponds TOUJOURS en fran\u00e7ais professionnel.\n2. Appuie-toi UNIQUEMENT sur les extraits fournis.\n3. Cite toujours les num\u00e9ros d\'articles ou comptes exacts.\n4. Ne jamais inventer taux, d\u00e9lais ou montants.\n\nFORMAT : ## Titre\n**Principe** : contexte\n**D\u00e9tails** :\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences** : Art. XX / Compte XXX';
+const SYSTEM_PROMPT = 'Tu es LexIA, assistant fiscal et comptable expert de Falcon Audit & Consulting. Tu es sp\u00e9cialis\u00e9 dans le Code G\u00e9n\u00e9ral des Imp\u00f4ts du Togo (OTR 2025), le Livre des Proc\u00e9dures Fiscales, la Loi de Finances 2025, la Loi de Finances 2026, le Plan Comptable SYSCOHADA R\u00e9vis\u00e9 2017 et OHADA.\n\nR\u00c8GLES ABSOLUES :\n1. R\u00e9ponds TOUJOURS en fran\u00e7ais professionnel.\n2. Appuie-toi UNIQUEMENT sur les extraits fournis.\n3. Cite toujours les num\u00e9ros d\'articles ou comptes exacts.\n4. Ne jamais inventer taux, d\u00e9lais ou montants.\n\nFORMAT : ## Titre\n**Principe** : contexte\n**D\u00e9tails** :\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences** : Art. XX / Compte XXX';
 
 async function extractPdfText(file) {
   const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -108,7 +116,14 @@ export default function FiscoBot() {
   const timerRef = useRef(null);
   const TOTAL_N = KB_N + KB_2025_N + KB_LF2026_N + KB_SYSCOHADA_N;
   const phases = ['Recherche CGI + SYSCOHADA...', 'Analyse des r\u00e9f\u00e9rences...', T.redaction];
-  const suggs = ['P\u00e9nalit\u00e9s retard d\u00e9claration ?', 'Taux IS au Togo ?', 'D\u00e9lais d\u00e9claration TVA ?', 'Classe 6 SYSCOHADA ?', 'Rescrit fiscal OTR ?', 'Amortissement mat\u00e9riel ?'];
+  const suggs = [
+    'Taux IS & p\u00e9nalit\u00e9s ?',
+    'TVA \u2014 seuil & d\u00e9lais ?',
+    'SYSCOHADA \u2014 classe 6 ?',
+    'Nouveaut\u00e9s LF 2026 ?',
+    'Rescrit fiscal OTR ?',
+    'Amortissement mat\u00e9riel ?',
+  ];
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -188,16 +203,21 @@ export default function FiscoBot() {
   return (
     <div style={{fontFamily:'Georgia,serif',background:'linear-gradient(135deg,#0f1923,#1a2a3a)',minHeight:'100vh',color:'#e8dcc8',display:'flex',flexDirection:'column'}}>
       <style>{`@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}*{box-sizing:border-box;margin:0;padding:0}html,body,#__next{height:100%}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(196,164,100,.3);border-radius:4px}`}</style>
+
       <div style={{borderBottom:`1px solid ${gf(.3)}`,padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(0,0,0,.35)'}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
-          <div style={{width:36,height:36,background:'linear-gradient(135deg,#c4a464,#8b6914)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{IC.scale}</div>
-          <div><div style={{fontWeight:'bold',fontSize:15}}>FiscoBot Togo</div><div style={{fontSize:9,color:gold,letterSpacing:'1.5px',textTransform:'uppercase'}}>CGI {IC.dot} LF2026 {IC.dot} SYSCOHADA {IC.dot} OHADA</div></div>
+          <div style={{width:36,height:36,background:'linear-gradient(135deg,#c4a464,#8b6914)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontStyle:'italic',fontWeight:'700',color:'#fff',letterSpacing:'-1px'}}>Lx</div>
+          <div>
+            <div style={{fontWeight:'bold',fontSize:15,color:'#e8dcc8'}}>{T.appName}</div>
+            <div style={{fontSize:9,color:gold,letterSpacing:'1.2px',textTransform:'uppercase'}}>{T.appSub}</div>
+          </div>
         </div>
         <div style={{display:'flex',gap:7,alignItems:'center'}}>
-          <div style={{fontSize:11,color:'#64c478',background:'rgba(100,196,120,.1)',border:'1px solid rgba(100,196,120,.25)',borderRadius:12,padding:'3px 10px'}}>{IC.check} {TOTAL_N} sections</div>
-          {isAdmin && <button onClick={()=>setShowDocs(p=>!p)} style={{padding:'4px 10px',border:`1px solid ${gf(.3)}`,borderRadius:12,background:showDocs?gf(.2):'transparent',color:'#c4a464',cursor:'pointer',fontSize:11}}>{IC.pin} Admin Docs</button>}
+          <div style={{fontSize:11,color:'#64c478',background:'rgba(100,196,120,.1)',border:'1px solid rgba(100,196,120,.25)',borderRadius:12,padding:'3px 10px'}}>{T.badgeIA}</div>
+          {isAdmin && <button onClick={()=>setShowDocs(p=>!p)} style={{padding:'4px 10px',border:`1px solid ${gf(.3)}`,borderRadius:12,background:showDocs?gf(.2):'transparent',color:'#c4a464',cursor:'pointer',fontSize:11}}>{IC.pin} Admin</button>}
         </div>
       </div>
+
       {isAdmin && showDocs && (
         <div style={{background:'rgba(196,164,100,.05)',borderBottom:`1px solid ${gf(.2)}`,padding:'12px 20px'}}>
           <div style={{fontSize:11,color:gold,marginBottom:8}}>{IC.lock} {T.modeAdmin}</div>
@@ -211,22 +231,29 @@ export default function FiscoBot() {
           {extraDocs && <div style={{fontSize:10,color:gf(.6),marginTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span>{IC.book} {extraDocs.length.toLocaleString()} {T.chars}</span><span onClick={()=>setExtraDocs('')} style={{cursor:'pointer',color:'#e07070',textDecoration:'underline'}}>Tout effacer</span></div>}
         </div>
       )}
+
       <div style={{flex:1,display:'flex',flexDirection:'column',maxWidth:820,width:'100%',margin:'0 auto',padding:'0 16px'}}>
         <div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:14,padding:'14px 0',minHeight:300,maxHeight:'60vh'}}>
           {messages.length === 0 ? (
             <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:18}}>
               <div style={{textAlign:'center'}}>
-                <div style={{fontSize:32,marginBottom:8}}>{IC.scale}</div>
-                <div style={{fontSize:17,color:gold,marginBottom:4}}>Mon Comptable</div>
-                <div style={{fontSize:13,color:'#8a9ab0',maxWidth:440,lineHeight:1.6}}><strong style={{color:'#c4a464'}}>CGI Togo</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LF 2025-2026</strong> {IC.dot} <strong style={{color:'#c4a464'}}>SYSCOHADA</strong> {IC.dot} {TOTAL_N} {T.indexees}</div>
+                <div style={{fontSize:40,fontStyle:'italic',fontWeight:'700',color:gold,marginBottom:8,letterSpacing:'-2px'}}>Lx</div>
+                <div style={{fontSize:18,color:'#e8dcc8',fontWeight:'500',marginBottom:6}}>{T.heroTitle}</div>
+                <div style={{fontSize:12,color:'#8a9ab0',maxWidth:480,lineHeight:1.7}}>{T.heroSub}</div>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,width:'100%',maxWidth:580}}>
-                {suggs.map((q, i) => (<button key={i} onClick={()=>send(q)} style={{padding:'8px 11px',background:'rgba(255,255,255,.03)',border:`1px solid ${gf(.2)}`,borderRadius:8,color:'#b8a88a',cursor:'pointer',fontSize:12,textAlign:'left',lineHeight:1.4}}>{IC.arrow} {q}</button>))}
+                {suggs.map((q, i) => (
+                  <button key={i} onClick={()=>send(q)} style={{padding:'8px 11px',background:'rgba(255,255,255,.03)',border:`1px solid ${gf(.2)}`,borderRadius:8,color:'#b8a88a',cursor:'pointer',fontSize:12,textAlign:'left',lineHeight:1.4}}>
+                    {IC.arrow} {q}
+                  </button>
+                ))}
               </div>
             </div>
           ) : messages.map((msg, i) => (
             <div key={i} style={{display:'flex',gap:10,flexDirection:msg.role==='user'?'row-reverse':'row',alignItems:'flex-start'}}>
-              <div style={{width:28,height:28,borderRadius:'50%',flexShrink:0,background:msg.role==='user'?'linear-gradient(135deg,#2a4a6a,#1a3a5a)':'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}>{msg.role === 'user' ? IC.person : IC.scale}</div>
+              <div style={{width:28,height:28,borderRadius:'50%',flexShrink:0,background:msg.role==='user'?'linear-gradient(135deg,#2a4a6a,#1a3a5a)':'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontStyle:'italic',fontWeight:'700',color:'#fff'}}>
+                {msg.role === 'user' ? IC.person : 'Lx'}
+              </div>
               <div style={{maxWidth:'78%'}}>
                 {msg.webSearch && <div style={{fontSize:10,color:'#6aabff',marginBottom:4}}>{IC.globe} Web search actif</div>}
                 <div style={{padding:'10px 14px',borderRadius:msg.role==='user'?'14px 3px 14px 14px':'3px 14px 14px 14px',background:msg.role==='user'?'rgba(42,74,106,.4)':gf(.08),border:msg.role==='user'?'1px solid rgba(42,74,106,.6)':`1px solid ${gf(.2)}`,fontSize:13,lineHeight:1.75,color:'#e0d4bc',whiteSpace:'pre-wrap'}}>
@@ -235,18 +262,19 @@ export default function FiscoBot() {
               </div>
             </div>
           ))}
-          {status==='loading'&&<div style={{display:'flex',gap:10}}><div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}>{IC.scale}</div><div style={{padding:'10px 16px',background:gf(.08),border:`1px solid ${gf(.2)}`,borderRadius:'3px 14px 14px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{display:'flex',gap:4}}>{[0,1,2].map(j=><div key={j} style={{width:5,height:5,borderRadius:'50%',background:gold,animation:'pulse 1.2s infinite',animationDelay:`${j*.2}s`}}/>)}</div><span style={{fontSize:12,color:gf(.7),fontStyle:'italic'}}>{phases[phase]}</span></div></div>}
+          {status==='loading'&&<div style={{display:'flex',gap:10}}><div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontStyle:'italic',fontWeight:'700',color:'#fff'}}>Lx</div><div style={{padding:'10px 16px',background:gf(.08),border:`1px solid ${gf(.2)}`,borderRadius:'3px 14px 14px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{display:'flex',gap:4}}>{[0,1,2].map(j=><div key={j} style={{width:5,height:5,borderRadius:'50%',background:gold,animation:'pulse 1.2s infinite',animationDelay:`${j*.2}s`}}/>)}</div><span style={{fontSize:12,color:gf(.7),fontStyle:'italic'}}>{phases[phase]}</span></div></div>}
           <div ref={endRef}/>
         </div>
+
         <div style={{borderTop:`1px solid ${gf(.15)}`,paddingTop:12,paddingBottom:14}}>
           {messages.length>0&&<div style={{display:'flex',justifyContent:'flex-end',marginBottom:6}}><button onClick={()=>setMessages([])} style={{background:'none',border:'none',color:'#8a9ab0',cursor:'pointer',fontSize:11}}>{IC.reset} {T.nouvelle}</button></div>}
           <div style={{display:'flex',gap:8,alignItems:'flex-end'}}>
             <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder={T.placeholder} rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
             <button onClick={()=>send()} disabled={status==='loading'||status==='streaming'||!input.trim()} style={{padding:'10px 16px',background:!input.trim()||status==='loading'||status==='streaming'?gf(.1):'linear-gradient(135deg,#c4a464,#8b6914)',border:'none',borderRadius:10,color:!input.trim()||status==='loading'||status==='streaming'?'#5a6a7a':'#fff',cursor:'pointer',fontSize:16,flexShrink:0}}>{IC.send}</button>
           </div>
-          <div style={{fontSize:10,color:'#4a5a6a',marginTop:6,textAlign:'center'}}>FiscoBot Togo {IC.dot} CGI {IC.dot} LF2025/2026 {IC.dot} SYSCOHADA {IC.dot} {TOTAL_N} sections</div>
+          <div style={{fontSize:10,color:'#4a5a6a',marginTop:6,textAlign:'center'}}>{IC.us} {IC.tg} {T.footer}</div>
         </div>
       </div>
     </div>
   );
-                      }
+}
