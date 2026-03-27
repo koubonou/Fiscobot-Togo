@@ -3,22 +3,35 @@ import { searchKB, KB_N } from '../lib/kb';
 
 const ADMIN_PASSWORD = 'fiscoadmin2025';
 
-// Emoji constants - defined here to avoid JSX encoding issues
+// Emoji constants
 const IC = {
-  scale:   '\u2696\ufe0f',
-  arrow:   '\u2197',
-  person:  '\ud83d\udc64',
-  pin:     '\ud83d\udccc',
-  folder:  '\ud83d\udcc2',
-  book:    '\ud83d\udcda',
-  lock:    '\ud83d\udd12',
-  send:    '\u27a4',
-  check:   '\u2713',
-  warn:    '\u26a0\ufe0f',
-  hour:    '\u23f3',
-  cross:   '\u274c',
-  reset:   '\u21ba',
-  dot:     '\u00b7',
+  scale:  '\u2696\ufe0f',
+  arrow:  '\u2197',
+  person: '\ud83d\udc64',
+  pin:    '\ud83d\udccc',
+  folder: '\ud83d\udcc2',
+  book:   '\ud83d\udcda',
+  lock:   '\ud83d\udd12',
+  send:   '\u27a4',
+  check:  '\u2713',
+  warn:   '\u26a0\ufe0f',
+  hour:   '\u23f3',
+  cross:  '\u274c',
+  reset:  '\u21ba',
+  dot:    '\u00b7',
+};
+
+// French text constants (\uXXXX only works in JS string context, not JSX text/attrs)
+const T = {
+  placeholder:  'P\u00e9nalit\u00e9s ? Taux IS ? Rescrit fiscal ?',
+  indexees:     'sections index\u00e9es',
+  modeAdmin:    'Mode Admin \u2014 Formats accept\u00e9s : PDF et TXT',
+  pdfSupport:   'PDF et TXT support\u00e9s \u2014 ',
+  pdfReady:     'PDF.js pr\u00eat',
+  pdfLoading:   'Chargement PDF.js...',
+  chars:        'caract\u00e8res charg\u00e9s',
+  nouvelle:     'Nouvelle conversation',
+  redaction:    'R\u00e9daction...',
 };
 
 const SYSTEM_PROMPT = 'Tu es FiscoBot, assistant fiscal expert sp\u00e9cialis\u00e9 dans le Code G\u00e9n\u00e9ral des Imp\u00f4ts du Togo (OTR 2025), le Livre des Proc\u00e9dures Fiscales, OHADA et SYSCOHADA r\u00e9vis\u00e9 2017.\n\nR\u00c8GLES ABSOLUES :\n1. R\u00e9ponds TOUJOURS en fran\u00e7ais professionnel.\n2. Appuie-toi UNIQUEMENT sur les extraits fournis.\n3. Cite toujours les num\u00e9ros d\'articles exacts.\n4. Ne jamais inventer taux, d\u00e9lais ou montants.\n\nFORMAT : ## Titre\n**Principe** : contexte\n**D\u00e9tails** :\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences** : Art. XX';
@@ -52,7 +65,7 @@ export default function FiscoBot() {
   const inputRef = useRef(null);
   const fileRef = useRef(null);
   const timerRef = useRef(null);
-  const phases = ['Recherche dans le CGI Togo 2025...', 'Analyse des articles...', 'R\u00e9daction...'];
+  const phases = ['Recherche dans le CGI Togo 2025...', 'Analyse des articles...', T.redaction];
   const suggs = ['P\u00e9nalit\u00e9s retard d\u00e9claration ?', 'Taux IS au Togo ?', 'D\u00e9lais d\u00e9claration TVA ?', 'Retenue source salaires ?', 'Rescrit fiscal OTR ?', 'R\u00e9gime entreprenant ?'];
 
   useEffect(() => {
@@ -124,17 +137,17 @@ export default function FiscoBot() {
       </div>
       {isAdmin && showDocs && (
         <div style={{background:'rgba(196,164,100,.05)',borderBottom:`1px solid ${gf(.2)}`,padding:'12px 20px'}}>
-          <div style={{fontSize:11,color:gold,marginBottom:8}}>{IC.lock} Mode Admin \u2014 Formats accept\u00e9s : PDF et TXT</div>
+          <div style={{fontSize:11,color:gold,marginBottom:8}}>{IC.lock} {T.modeAdmin}</div>
           <div onClick={()=>fileRef.current?.click()} style={{border:`2px dashed ${gf(.4)}`,borderRadius:8,padding:'14px',textAlign:'center',cursor:'pointer',fontSize:12,color:gf(.8)}} onMouseEnter={e=>e.currentTarget.style.background='rgba(196,164,100,.08)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
             <input ref={fileRef} type='file' accept='.pdf,.txt' multiple onChange={e=>{handleFiles(Array.from(e.target.files));e.target.value='';}} style={{display:'none'}}/>
             <div style={{fontSize:20,marginBottom:4}}>{IC.folder}</div>
             <div>Cliquer pour ajouter des documents</div>
-            <div style={{fontSize:10,color:gf(.5),marginTop:3}}>PDF et TXT support\u00e9s \u2014 {pdfLoaded ? IC.check+' PDF.js pr\u00eat' : IC.hour+' Chargement PDF.js...'}</div>
+            <div style={{fontSize:10,color:gf(.5),marginTop:3}}>{T.pdfSupport}{pdfLoaded ? IC.check+' '+T.pdfReady : IC.hour+' '+T.pdfLoading}</div>
             {uploadMsg && <div style={{marginTop:6,color:'#64c478',fontWeight:'bold'}}>{uploadMsg}</div>}
           </div>
           {extraDocs && (
             <div style={{fontSize:10,color:gf(.6),marginTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span>{IC.book} {extraDocs.length.toLocaleString()} caract\u00e8res charg\u00e9s</span>
+              <span>{IC.book} {extraDocs.length.toLocaleString()} {T.chars}</span>
               <span onClick={()=>setExtraDocs('')} style={{cursor:'pointer',color:'#e07070',textDecoration:'underline'}}>Tout effacer</span>
             </div>
           )}
@@ -148,7 +161,7 @@ export default function FiscoBot() {
                 <div style={{fontSize:32,marginBottom:8}}>{IC.scale}</div>
                 <div style={{fontSize:17,color:gold,marginBottom:4}}>Mon Comptable</div>
                 <div style={{fontSize:13,color:'#8a9ab0',maxWidth:440,lineHeight:1.6}}>
-                  <strong style={{color:'#c4a464'}}>CGI Togo 2025</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LPF</strong> {IC.dot} {KB_N} sections index\u00e9es
+                  <strong style={{color:'#c4a464'}}>CGI Togo 2025</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LPF</strong> {IC.dot} {KB_N} {T.indexees}
                 </div>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,width:'100%',maxWidth:580}}>
@@ -185,11 +198,11 @@ export default function FiscoBot() {
         <div style={{borderTop:`1px solid ${gf(.15)}`,paddingTop:12,paddingBottom:14}}>
           {messages.length > 0 && (
             <div style={{display:'flex',justifyContent:'flex-end',marginBottom:6}}>
-              <button onClick={()=>setMessages([])} style={{background:'none',border:'none',color:'#8a9ab0',cursor:'pointer',fontSize:11}}>{IC.reset} Nouvelle conversation</button>
+              <button onClick={()=>setMessages([])} style={{background:'none',border:'none',color:'#8a9ab0',cursor:'pointer',fontSize:11}}>{IC.reset} {T.nouvelle}</button>
             </div>
           )}
           <div style={{display:'flex',gap:8,alignItems:'flex-end'}}>
-            <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder='P\u00e9nalit\u00e9s ? Taux IS ? Rescrit fiscal ?' rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
+            <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder={T.placeholder} rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
             <button onClick={()=>send()} disabled={status==='loading'||!input.trim()} style={{padding:'10px 16px',background:!input.trim()||status==='loading'?gf(.1):'linear-gradient(135deg,#c4a464,#8b6914)',border:'none',borderRadius:10,color:!input.trim()||status==='loading'?'#5a6a7a':'#fff',cursor:'pointer',fontSize:16,flexShrink:0}}>{IC.send}</button>
           </div>
           <div style={{fontSize:10,color:'#4a5a6a',marginTop:6,textAlign:'center'}}>FiscoBot Togo {IC.dot} CGI OTR 2025 {IC.dot} {KB_N} sections</div>
@@ -197,4 +210,4 @@ export default function FiscoBot() {
       </div>
     </div>
   );
-                  }
+  }
