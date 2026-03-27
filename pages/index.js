@@ -114,7 +114,7 @@ export default function FiscoBot() {
       <style>{`@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}*{box-sizing:border-box;margin:0;padding:0}html,body,#__next{height:100%}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(196,164,100,.3);border-radius:4px}`}</style>
       <div style={{borderBottom:`1px solid ${gf(.3)}`,padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(0,0,0,.35)'}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
-          <div style={{width:36,height:36,background:'linear-gradient(135deg,#c4a464,#8b6914)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>âï¸</div>
+          <img src="https://raw.githubusercontent.com/koubonou/Fiscobot-Togo/main/falcon%20proaccountants%20red.png" alt="Falcon" style={{height:'48px',width:'auto',objectFit:'contain'}} />
           <div><div style={{fontWeight:'bold',fontSize:15}}>FiscoBot Togo</div><div style={{fontSize:9,color:gold,letterSpacing:'1.5px',textTransform:'uppercase'}}>CGI OTR 2025 Â· LPF Â· OHADA Â· SYSCOHADA</div></div>
         </div>
         <div style={{display:'flex',gap:7,alignItems:'center'}}>
@@ -145,7 +145,7 @@ export default function FiscoBot() {
           {messages.length===0?(
             <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:18}}>
               <div style={{textAlign:'center'}}>
-                <div style={{fontSize:32,marginBottom:8}}>âï¸</div>
+                <img src="https://raw.githubusercontent.com/koubonou/Fiscobot-Togo/main/falcon%20proaccountants%20red.png" alt="Falcon" style={{height:'64px',width:'auto',objectFit:'contain',marginBottom:8}} />
                 <div style={{fontSize:17,color:gold,marginBottom:4}}>Mon Comptable</div>
                 
               </div>
