@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { searchKB, KB_N } from '../lib/kb';
+import { searchKB2025, KB_2025_N } from '../lib/kb_cahier2025';
 
 const ADMIN_PASSWORD = 'fiscoadmin2025';
 
@@ -45,16 +46,21 @@ const EXPAND = {
   'entreprenant': 'r\u00e9gime entreprenant micro-entreprise',
   'transfert':    'prix de transfert parties li\u00e9es',
   'enregistrement': 'droits enregistrement actes notari\u00e9s',
-  'tvm':          'TVM taxe valeur mobilier dividendes',
+  'tvm':          'TVM taxe valeur mobilier dividendes suspension',
   'delai':        'd\u00e9lai d\u00e9claration paiement',
   'd\u00e9lai':  'd\u00e9lai d\u00e9claration paiement',
+  'numerique':    'plateforme \u00e9lectronique e-commerce internet',
+  'seuil':        'seuil TVA assujettissement CA chiffre affaires',
+  'etat financier': '\u00e9tats financiers d\u00e9finitifs provisoires d\u00e9p\u00f4t',
+  'accise':       'droits accises boissons alcools',
+  'agricole':     'mat\u00e9riel agricole exon\u00e9ration',
 };
 
 function expandQuery(q) {
-  const lower = q.toLowerCase();
-  const extras = [];
-  for (const [key, val] of Object.entries(EXPAND)) {
-    if (lower.includes(key)) extras.push(val);
+  var lower = q.toLowerCase();
+  var extras = [];
+  for (var key in EXPAND) {
+    if (lower.indexOf(key) !== -1) extras.push(EXPAND[key]);
   }
   return extras.length ? q + ' ' + extras.join(' ') : q;
 }
@@ -90,6 +96,7 @@ export default function FiscoBot() {
   const inputRef = useRef(null);
   const fileRef = useRef(null);
   const timerRef = useRef(null);
+  const TOTAL_N = KB_N + KB_2025_N;
   const phases = ['Recherche dans le CGI Togo 2025...', 'Analyse des articles...', T.redaction];
   const suggs = ['P\u00e9nalit\u00e9s retard d\u00e9claration ?', 'Taux IS au Togo ?', 'D\u00e9lais d\u00e9claration TVA ?', 'Retenue source salaires ?', 'Rescrit fiscal OTR ?', 'R\u00e9gime entreprenant ?'];
 
@@ -125,7 +132,9 @@ export default function FiscoBot() {
     timerRef.current = setInterval(() => setPhase(p => (p + 1) % phases.length), 2200);
     setMessages(prev => [...prev, { role: 'user', content: question }]);
     const expanded = expandQuery(question);
-    const hits = searchKB(expanded, 5);
+    const hitsMain = searchKB(expanded, 4);
+    const hits2025 = searchKB2025(expanded, 2);
+    const hits = [...hitsMain, ...hits2025];
     const context = hits.length ? 'EXTRAITS CGI TOGO 2025 :\n\n' + hits.join('\n\n---\n\n') : 'Aucun extrait trouv\u00e9.';
     const full = extraDocs.trim() ? context + '\n\n=== DOCS ADMIN ===\n' + extraDocs.slice(0, 8000) : context;
     const userMsg = full + '\n\n---\n\nQuestion : ' + question;
@@ -191,7 +200,7 @@ export default function FiscoBot() {
           </div>
         </div>
         <div style={{display:'flex',gap:7,alignItems:'center'}}>
-          <div style={{fontSize:11,color:'#64c478',background:'rgba(100,196,120,.1)',border:'1px solid rgba(100,196,120,.25)',borderRadius:12,padding:'3px 10px'}}>{IC.check} {KB_N} sections</div>
+          <div style={{fontSize:11,color:'#64c478',background:'rgba(100,196,120,.1)',border:'1px solid rgba(100,196,120,.25)',borderRadius:12,padding:'3px 10px'}}>{IC.check} {TOTAL_N} sections</div>
           {isAdmin && <button onClick={()=>setShowDocs(p=>!p)} style={{padding:'4px 10px',border:`1px solid ${gf(.3)}`,borderRadius:12,background:showDocs?gf(.2):'transparent',color:'#c4a464',cursor:'pointer',fontSize:11}}>{IC.pin} Admin Docs</button>}
         </div>
       </div>
@@ -221,7 +230,7 @@ export default function FiscoBot() {
                 <div style={{fontSize:32,marginBottom:8}}>{IC.scale}</div>
                 <div style={{fontSize:17,color:gold,marginBottom:4}}>Mon Comptable</div>
                 <div style={{fontSize:13,color:'#8a9ab0',maxWidth:440,lineHeight:1.6}}>
-                  <strong style={{color:'#c4a464'}}>CGI Togo 2025</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LPF</strong> {IC.dot} {KB_N} {T.indexees}
+                  <strong style={{color:'#c4a464'}}>CGI Togo 2025</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LPF</strong> {IC.dot} {TOTAL_N} {T.indexees}
                 </div>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,width:'100%',maxWidth:580}}>
@@ -269,9 +278,9 @@ export default function FiscoBot() {
             <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder={T.placeholder} rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
             <button onClick={()=>send()} disabled={status==='loading'||status==='streaming'||!input.trim()} style={{padding:'10px 16px',background:!input.trim()||status==='loading'||status==='streaming'?gf(.1):'linear-gradient(135deg,#c4a464,#8b6914)',border:'none',borderRadius:10,color:!input.trim()||status==='loading'||status==='streaming'?'#5a6a7a':'#fff',cursor:'pointer',fontSize:16,flexShrink:0}}>{IC.send}</button>
           </div>
-          <div style={{fontSize:10,color:'#4a5a6a',marginTop:6,textAlign:'center'}}>FiscoBot Togo {IC.dot} CGI OTR 2025 {IC.dot} {KB_N} sections</div>
+          <div style={{fontSize:10,color:'#4a5a6a',marginTop:6,textAlign:'center'}}>FiscoBot Togo {IC.dot} CGI OTR 2025 {IC.dot} {TOTAL_N} sections</div>
         </div>
       </div>
     </div>
   );
-  }
+                }
