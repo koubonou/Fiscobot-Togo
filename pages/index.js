@@ -35,33 +35,31 @@ const T = {
 };
 
 const EXPAND = {
-  'tva':          'TVA taxe valeur ajout\u00e9e d\u00e9claration',
-  'is':           'imp\u00f4t soci\u00e9t\u00e9s IS taux',
-  'irpp':         'IRPP imp\u00f4t revenu personnes physiques',
-  'retenue':      'retenue source salaires dividendes',
-  'penalite':     'p\u00e9nalit\u00e9s amende majoration retard',
+  'tva': 'TVA taxe valeur ajout\u00e9e d\u00e9claration seuil',
+  'is': 'imp\u00f4t soci\u00e9t\u00e9s IS taux',
+  'irpp': 'IRPP imp\u00f4t revenu personnes physiques',
+  'retenue': 'retenue source salaires dividendes prestations',
+  'penalite': 'p\u00e9nalit\u00e9s amende majoration retard',
   'p\u00e9nalit\u00e9': 'p\u00e9nalit\u00e9s amende majoration retard',
-  'rescrit':      'rescrit fiscal OTR r\u00e9ponse administration',
-  'ohada':        'OHADA SYSCOHADA actes uniformes comptabilit\u00e9',
+  'rescrit': 'rescrit fiscal OTR r\u00e9ponse administration',
+  'ohada': 'OHADA SYSCOHADA actes uniformes comptabilit\u00e9',
   'entreprenant': 'r\u00e9gime entreprenant micro-entreprise',
-  'transfert':    'prix de transfert parties li\u00e9es',
+  'transfert': 'prix de transfert parties li\u00e9es',
   'enregistrement': 'droits enregistrement actes notari\u00e9s',
-  'tvm':          'TVM taxe valeur mobilier dividendes suspension',
-  'delai':        'd\u00e9lai d\u00e9claration paiement',
-  'd\u00e9lai':  'd\u00e9lai d\u00e9claration paiement',
-  'numerique':    'plateforme \u00e9lectronique e-commerce internet',
-  'seuil':        'seuil TVA assujettissement CA chiffre affaires',
-  'etat financier': '\u00e9tats financiers d\u00e9finitifs provisoires d\u00e9p\u00f4t',
-  'accise':       'droits accises boissons alcools',
-  'agricole':     'mat\u00e9riel agricole exon\u00e9ration',
+  'tvm': 'TVM taxe v\u00e9hicules moteur suspension 2025',
+  'delai': 'd\u00e9lai d\u00e9claration paiement',
+  'd\u00e9lai': 'd\u00e9lai d\u00e9claration paiement',
+  'numerique': 'plateforme \u00e9lectronique e-commerce internet NIF',
+  'seuil': 'seuil TVA assujettissement 100 millions FCFA',
+  'accise': 'droits accises boissons sucr\u00e9es alcools',
+  'agricole': 'mat\u00e9riel agricole exon\u00e9ration 2025',
+  'etat financier': '\u00e9tats financiers d\u00e9finitifs provisoires',
 };
 
 function expandQuery(q) {
   var lower = q.toLowerCase();
   var extras = [];
-  for (var key in EXPAND) {
-    if (lower.indexOf(key) !== -1) extras.push(EXPAND[key]);
-  }
+  for (var key in EXPAND) { if (lower.indexOf(key) !== -1) extras.push(EXPAND[key]); }
   return extras.length ? q + ' ' + extras.join(' ') : q;
 }
 
@@ -126,9 +124,7 @@ export default function FiscoBot() {
   const send = async (q) => {
     const question = q || input.trim();
     if (!question || status === 'loading' || status === 'streaming') return;
-    setInput('');
-    setStatus('loading');
-    setPhase(0);
+    setInput(''); setStatus('loading'); setPhase(0);
     timerRef.current = setInterval(() => setPhase(p => (p + 1) % phases.length), 2200);
     setMessages(prev => [...prev, { role: 'user', content: question }]);
     const expanded = expandQuery(question);
@@ -141,38 +137,25 @@ export default function FiscoBot() {
     try {
       clearInterval(timerRef.current);
       setStatus('streaming');
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stream: true, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: userMsg }] }),
-      });
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stream: true, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: userMsg }] }) });
       if (!res.ok) throw new Error('Erreur serveur ' + res.status);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let buf = '';
-      let fullText = '';
-      let isWeb = false;
+      let buf = ''; let fullText = ''; let isWeb = false;
       setMessages(prev => [...prev, { role: 'assistant', content: '', webSearch: false }]);
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buf += decoder.decode(value, { stream: true });
-        const evts = buf.split('\n');
-        buf = evts.pop();
+        const evts = buf.split('\n'); buf = evts.pop();
         for (const line of evts) {
           if (!line.startsWith('data: ')) continue;
           const raw = line.slice(6).trim();
           if (!raw || raw === '[DONE]') continue;
           try {
             const e = JSON.parse(raw);
-            if (e.type === 'content_block_start' && e.content_block?.type === 'tool_use') {
-              isWeb = true;
-              setMessages(prev => { const m = [...prev]; m[m.length-1] = {...m[m.length-1], webSearch: true}; return m; });
-            }
-            if (e.type === 'content_block_delta' && e.delta?.type === 'text_delta') {
-              fullText += e.delta.text;
-              setMessages(prev => { const m = [...prev]; m[m.length-1] = {role:'assistant', content:fullText, webSearch:isWeb}; return m; });
-            }
+            if (e.type === 'content_block_start' && e.content_block?.type === 'tool_use') { isWeb = true; setMessages(prev => { const m = [...prev]; m[m.length-1] = {...m[m.length-1], webSearch: true}; return m; }); }
+            if (e.type === 'content_block_delta' && e.delta?.type === 'text_delta') { fullText += e.delta.text; setMessages(prev => { const m = [...prev]; m[m.length-1] = {role:'assistant', content:fullText, webSearch:isWeb}; return m; }); }
           } catch(_) {}
         }
       }
@@ -194,10 +177,7 @@ export default function FiscoBot() {
       <div style={{borderBottom:`1px solid ${gf(.3)}`,padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(0,0,0,.35)'}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <div style={{width:36,height:36,background:'linear-gradient(135deg,#c4a464,#8b6914)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{IC.scale}</div>
-          <div>
-            <div style={{fontWeight:'bold',fontSize:15}}>FiscoBot Togo</div>
-            <div style={{fontSize:9,color:gold,letterSpacing:'1.5px',textTransform:'uppercase'}}>CGI OTR 2025 {IC.dot} LPF {IC.dot} OHADA {IC.dot} SYSCOHADA</div>
-          </div>
+          <div><div style={{fontWeight:'bold',fontSize:15}}>FiscoBot Togo</div><div style={{fontSize:9,color:gold,letterSpacing:'1.5px',textTransform:'uppercase'}}>CGI OTR 2025 {IC.dot} LPF {IC.dot} OHADA {IC.dot} SYSCOHADA</div></div>
         </div>
         <div style={{display:'flex',gap:7,alignItems:'center'}}>
           <div style={{fontSize:11,color:'#64c478',background:'rgba(100,196,120,.1)',border:'1px solid rgba(100,196,120,.25)',borderRadius:12,padding:'3px 10px'}}>{IC.check} {TOTAL_N} sections</div>
@@ -214,12 +194,7 @@ export default function FiscoBot() {
             <div style={{fontSize:10,color:gf(.5),marginTop:3}}>{T.pdfSupport}{pdfLoaded ? IC.check+' '+T.pdfReady : IC.hour+' '+T.pdfLoading}</div>
             {uploadMsg && <div style={{marginTop:6,color:'#64c478',fontWeight:'bold'}}>{uploadMsg}</div>}
           </div>
-          {extraDocs && (
-            <div style={{fontSize:10,color:gf(.6),marginTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span>{IC.book} {extraDocs.length.toLocaleString()} {T.chars}</span>
-              <span onClick={()=>setExtraDocs('')} style={{cursor:'pointer',color:'#e07070',textDecoration:'underline'}}>Tout effacer</span>
-            </div>
-          )}
+          {extraDocs && <div style={{fontSize:10,color:gf(.6),marginTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span>{IC.book} {extraDocs.length.toLocaleString()} {T.chars}</span><span onClick={()=>setExtraDocs('')} style={{cursor:'pointer',color:'#e07070',textDecoration:'underline'}}>Tout effacer</span></div>}
         </div>
       )}
       <div style={{flex:1,display:'flex',flexDirection:'column',maxWidth:820,width:'100%',margin:'0 auto',padding:'0 16px'}}>
@@ -229,51 +204,28 @@ export default function FiscoBot() {
               <div style={{textAlign:'center'}}>
                 <div style={{fontSize:32,marginBottom:8}}>{IC.scale}</div>
                 <div style={{fontSize:17,color:gold,marginBottom:4}}>Mon Comptable</div>
-                <div style={{fontSize:13,color:'#8a9ab0',maxWidth:440,lineHeight:1.6}}>
-                  <strong style={{color:'#c4a464'}}>CGI Togo 2025</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LPF</strong> {IC.dot} {TOTAL_N} {T.indexees}
-                </div>
+                <div style={{fontSize:13,color:'#8a9ab0',maxWidth:440,lineHeight:1.6}}><strong style={{color:'#c4a464'}}>CGI Togo 2025</strong> {IC.dot} <strong style={{color:'#c4a464'}}>LPF</strong> {IC.dot} {TOTAL_N} {T.indexees}</div>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,width:'100%',maxWidth:580}}>
-                {suggs.map((q, i) => (
-                  <button key={i} onClick={()=>send(q)} style={{padding:'8px 11px',background:'rgba(255,255,255,.03)',border:`1px solid ${gf(.2)}`,borderRadius:8,color:'#b8a88a',cursor:'pointer',fontSize:12,textAlign:'left',lineHeight:1.4}}>
-                    {IC.arrow} {q}
-                  </button>
-                ))}
+                {suggs.map((q, i) => (<button key={i} onClick={()=>send(q)} style={{padding:'8px 11px',background:'rgba(255,255,255,.03)',border:`1px solid ${gf(.2)}`,borderRadius:8,color:'#b8a88a',cursor:'pointer',fontSize:12,textAlign:'left',lineHeight:1.4}}>{IC.arrow} {q}</button>))}
               </div>
             </div>
           ) : messages.map((msg, i) => (
             <div key={i} style={{display:'flex',gap:10,flexDirection:msg.role==='user'?'row-reverse':'row',alignItems:'flex-start'}}>
-              <div style={{width:28,height:28,borderRadius:'50%',flexShrink:0,background:msg.role==='user'?'linear-gradient(135deg,#2a4a6a,#1a3a5a)':'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}>
-                {msg.role === 'user' ? IC.person : IC.scale}
-              </div>
+              <div style={{width:28,height:28,borderRadius:'50%',flexShrink:0,background:msg.role==='user'?'linear-gradient(135deg,#2a4a6a,#1a3a5a)':'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}>{msg.role === 'user' ? IC.person : IC.scale}</div>
               <div style={{maxWidth:'78%'}}>
                 {msg.webSearch && <div style={{fontSize:10,color:'#6aabff',marginBottom:4}}>{IC.globe} Web search actif</div>}
                 <div style={{padding:'10px 14px',borderRadius:msg.role==='user'?'14px 3px 14px 14px':'3px 14px 14px 14px',background:msg.role==='user'?'rgba(42,74,106,.4)':gf(.08),border:msg.role==='user'?'1px solid rgba(42,74,106,.6)':`1px solid ${gf(.2)}`,fontSize:13,lineHeight:1.75,color:'#e0d4bc',whiteSpace:'pre-wrap'}}>
-                  {msg.content}
-                  {msg.role==='assistant'&&status==='streaming'&&i===messages.length-1&&(
-                    <span style={{animation:'blink 1s infinite',marginLeft:2,color:gold}}>|</span>
-                  )}
+                  {msg.content}{msg.role==='assistant'&&status==='streaming'&&i===messages.length-1&&<span style={{animation:'blink 1s infinite',marginLeft:2,color:gold}}>|</span>}
                 </div>
               </div>
             </div>
           ))}
-          {status==='loading'&&(
-            <div style={{display:'flex',gap:10}}>
-              <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}>{IC.scale}</div>
-              <div style={{padding:'10px 16px',background:gf(.08),border:`1px solid ${gf(.2)}`,borderRadius:'3px 14px 14px 14px',display:'flex',alignItems:'center',gap:10}}>
-                <div style={{display:'flex',gap:4}}>{[0,1,2].map(j=><div key={j} style={{width:5,height:5,borderRadius:'50%',background:gold,animation:'pulse 1.2s infinite',animationDelay:`${j*.2}s`}}/>)}</div>
-                <span style={{fontSize:12,color:gf(.7),fontStyle:'italic'}}>{phases[phase]}</span>
-              </div>
-            </div>
-          )}
+          {status==='loading'&&<div style={{display:'flex',gap:10}}><div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}>{IC.scale}</div><div style={{padding:'10px 16px',background:gf(.08),border:`1px solid ${gf(.2)}`,borderRadius:'3px 14px 14px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{display:'flex',gap:4}}>{[0,1,2].map(j=><div key={j} style={{width:5,height:5,borderRadius:'50%',background:gold,animation:'pulse 1.2s infinite',animationDelay:`${j*.2}s`}}/>)}</div><span style={{fontSize:12,color:gf(.7),fontStyle:'italic'}}>{phases[phase]}</span></div></div>}
           <div ref={endRef}/>
         </div>
         <div style={{borderTop:`1px solid ${gf(.15)}`,paddingTop:12,paddingBottom:14}}>
-          {messages.length>0&&(
-            <div style={{display:'flex',justifyContent:'flex-end',marginBottom:6}}>
-              <button onClick={()=>setMessages([])} style={{background:'none',border:'none',color:'#8a9ab0',cursor:'pointer',fontSize:11}}>{IC.reset} {T.nouvelle}</button>
-            </div>
-          )}
+          {messages.length>0&&<div style={{display:'flex',justifyContent:'flex-end',marginBottom:6}}><button onClick={()=>setMessages([])} style={{background:'none',border:'none',color:'#8a9ab0',cursor:'pointer',fontSize:11}}>{IC.reset} {T.nouvelle}</button></div>}
           <div style={{display:'flex',gap:8,alignItems:'flex-end'}}>
             <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder={T.placeholder} rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
             <button onClick={()=>send()} disabled={status==='loading'||status==='streaming'||!input.trim()} style={{padding:'10px 16px',background:!input.trim()||status==='loading'||status==='streaming'?gf(.1):'linear-gradient(135deg,#c4a464,#8b6914)',border:'none',borderRadius:10,color:!input.trim()||status==='loading'||status==='streaming'?'#5a6a7a':'#fff',cursor:'pointer',fontSize:16,flexShrink:0}}>{IC.send}</button>
@@ -283,4 +235,4 @@ export default function FiscoBot() {
       </div>
     </div>
   );
-                }
+}
