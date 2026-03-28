@@ -4,6 +4,8 @@ import { searchKB2025, KB_2025_N } from '../lib/kb_cahier2025';
 import { searchKBLF2026, KB_LF2026_N } from '../lib/kb_lf2026';
 import { searchKBSYSCOHADA, KB_SYSCOHADA_N } from '../lib/kb_syscohada';
 import { searchKBSENEGAL, KB_SENEGAL_N } from '../lib/kb_senegal';
+import { searchKBNFPTOGO, KB_NFP_TOGO_N } from '../lib/kb_nfp_togo';
+import { searchKBNFPSENEGAL, KB_NFP_SENEGAL_N } from '../lib/kb_nfp_senegal';
 
 const ADMIN_PASSWORD = 'Cpa2026@';
 
@@ -117,6 +119,11 @@ const EXPAND = {
   'dgid': 'DGID direction impots domaines senegal',
   'patente': 'patente contribution professionnelle senegal',
   'foncier': 'foncier CFB CFU contribution fonci\u00e8re senegal',
+  'nfp': 'ONG association but non lucratif EBNL SYCEBNL',
+  'ong': 'ONG association but non lucratif EBNL SYCEBNL agr\u00e9ment',
+  'association': 'association ONG but non lucratif EBNL SYCEBNL cotisations dons',
+  'sycebnl': 'SYCEBNL comptabilite entite but non lucratif ONG',
+  'nonprofit': 'ONG association but non lucratif EBNL SYCEBNL',
   'gudef': 'GUDEF d\u00e9p\u00f4t \u00e9tats financiers liasse togo',
   'seuil': 'seuil TVA assujettissement 100 millions FCFA 50 millions threshold',
 };
@@ -162,7 +169,7 @@ export default function LexIA() {
 
   const T = LANG[lang][country];
   const C = COUNTRIES[country];
-  const TOTAL_N = KB_N + KB_2025_N + KB_LF2026_N + KB_SYSCOHADA_N + KB_SENEGAL_N;
+  const TOTAL_N = KB_N + KB_2025_N + KB_LF2026_N + KB_SYSCOHADA_N + KB_SENEGAL_N + KB_NFP_TOGO_N + KB_NFP_SENEGAL_N;
   const phases = [
     lang === 'fr' ? 'Recherche en cours...' : 'Searching...',
     lang === 'fr' ? 'Analyse des r\u00e9f\u00e9rences...' : 'Analysing...',
@@ -211,9 +218,11 @@ export default function LexIA() {
     const hits2026 = searchKBLF2026(expanded, 2);
     const hitsSYSCO = searchKBSYSCOHADA(expanded, 2);
     const hitsSEN = country === 'sn' ? searchKBSENEGAL(expanded, 4) : searchKBSENEGAL(expanded, 1);
+    const hitsNFPTG = searchKBNFPTOGO(expanded, 2);
+    const hitsNFPSN = country === 'sn' ? searchKBNFPSENEGAL(expanded, 2) : searchKBNFPSENEGAL(expanded, 1);
     const hits = country === 'sn'
-      ? [...hitsSEN, ...hitsSYSCO, ...hitsMain]
-      : [...hitsMain, ...hits2025, ...hits2026, ...hitsSYSCO, ...hitsSEN];
+      ? [...hitsSEN, ...hitsNFPSN, ...hitsSYSCO, ...hitsMain, ...hitsNFPTG]
+      : [...hitsMain, ...hits2025, ...hits2026, ...hitsSYSCO, ...hitsSEN, ...hitsNFPTG, ...hitsNFPSN];
     const context = hits.length
       ? (lang === 'fr' ? 'EXTRAITS KB LEXIA :\n\n' : 'LEXIA KB EXCERPTS:\n\n') + hits.join('\n\n---\n\n')
       : (lang === 'fr' ? 'Aucun extrait trouv\u00e9.' : 'No excerpt found.');
