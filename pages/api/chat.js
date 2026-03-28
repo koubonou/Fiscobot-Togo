@@ -1,4 +1,6 @@
-// In-memory cache (resets on cold start, ~15min on Vercel free tier)
+// LexIA - API Chat Handler
+// Fix: max_tokens increased to 3000 to handle web search responses
+
 const CACHE = new Map();
 const MAX_CACHE = 200;
 
@@ -6,9 +8,8 @@ export const config = { api: { responseLimit: false } };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
-  const { messages, system, stream } = req.body;
 
-  // Cache key: question text only
+  const { messages, system, stream } = req.body;
   const question = (messages?.[0]?.content || '').slice(-300).trim().toLowerCase();
 
   // Cache hit (non-streaming only)
@@ -18,7 +19,7 @@ export default async function handler(req, res) {
 
   const apiBody = {
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 1400,
+    max_tokens: 3000,
     system,
     messages,
     tools: [{ type: 'web_search_20250305', name: 'web_search' }],
@@ -41,6 +42,14 @@ export default async function handler(req, res) {
         headers,
         body: JSON.stringify({ ...apiBody, stream: true }),
       });
+      if (!upstream.ok) {
+        const errText = await upstream.text();
+        res.write('data: {"type":"error","message":"API error ' + upstream.status + '"}
+
+');
+        res.end();
+        return;
+      }
       const reader = upstream.body.getReader();
       const decoder = new TextDecoder();
       while (true) {
@@ -49,7 +58,9 @@ export default async function handler(req, res) {
         res.write(decoder.decode(value, { stream: true }));
       }
     } catch (err) {
-      res.write('data: {"type":"error","message":"' + err.message + '"}\n\n');
+      res.write('data: {"type":"error","message":"' + err.message.replace(/"/g, "'") + '"}
+
+');
     } finally {
       res.end();
     }
@@ -72,4 +83,4 @@ export default async function handler(req, res) {
   } catch (err) {
     res.status(500).json({ error: { message: err.message } });
   }
-}
+                                 }
