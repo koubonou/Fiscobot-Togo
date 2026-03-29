@@ -8,7 +8,7 @@ async function logQuestion(question, country, lang) {
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_ANON_KEY;
     if (!url || !key) return;
-    await fetch(url + "/rest/v1/questions", {
+    await fetch(url + "/rest/v1/lexia_questions", {
       method: "POST",
       headers: {
         "apikey": key,
