@@ -28,14 +28,14 @@ const LANG = {
   fr: {
     tg: {
       placeholder: 'Posez votre question fiscale ou comptable\u2026',
-      heroTitle: 'Votre expert fiscal et comptable IA',
+      heroTitle: 'Votre intelligence fiscale et comptable IA à votre Service',
       heroSub: 'CGI 2025 \u00b7 LF2026 \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
       suggs: ['Taux IS & p\u00e9nalit\u00e9s ?','TVA \u2014 seuil & d\u00e9lais ?','SYSCOHADA \u2014 classe 6 ?','Nouveaut\u00e9s LF 2026 ?','ONG \u2014 r\u00e9gime fiscal ?','Amortissement mat\u00e9riel ?'],
       systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI Togo OTR 2025, LPF, LF2025, LF2026, SYSCOHADA 2017, OHADA, ONG/EBNL.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur otr.tg. Cite les articles. Ne pas inventer.\nFORMAT: ## Titre\n**Principe**:\n**D\u00e9tails**:\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX',
     },
     sn: {
       placeholder: 'Posez votre question fiscale ou comptable\u2026',
-      heroTitle: 'Votre expert fiscal et comptable IA',
+      heroTitle: 'Votre intelligence fiscale et comptable IA à votre Service',
       heroSub: 'CGI S\u00e9n\u00e9gal \u00b7 DGID \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
       suggs: ['IS S\u00e9n\u00e9gal \u2014 taux 30% ?','TVA \u2014 seuil 50M FCFA ?','CGU \u2014 petites entreprises ?','ONG \u2014 r\u00e9gime fiscal ?','IPRES & CSS ?','Code des investissements ?'],
       systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI S\u00e9n\u00e9gal DGID 2025, UEMOA, SYSCOHADA 2017, ONG/EBNL S\u00e9n\u00e9gal.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur impotsetdomaines.gouv.sn. Cite les articles. Ne pas inventer.\nFORMAT: ## Titre\n**Principe**:\n**D\u00e9tails**:\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX | DGID',
