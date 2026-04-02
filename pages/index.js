@@ -111,6 +111,7 @@ async function extractPdfText(file) {
   return text;
 }
 
+function parseMarkdown(t){if(!t)return '';let h=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');h=h.replace(/^## (.+)$/gm,function(m,p1){return '<div style="font-size:14px;font-weight:700;color:#c4a464;margin:10px 0 5px;border-bottom:1px solid rgba(196,164,100,.2);padding-bottom:3px">'+p1+'</div>';});h=h.replace(/^### (.+)$/gm,function(m,p1){return '<div style="font-size:13px;font-weight:700;color:#d4b474;margin:8px 0 4px">'+p1+'</div>';});h=h.replace(/\*\*(.+?)\*\*/g,function(m,p1){return '<strong style="color:#e8dcc8">'+p1+'</strong>';});h=h.replace(/^[\u2022\-] (.+)$/gm,function(m,p1){return '<div style="display:flex;gap:6px;margin:2px 0"><span style="color:#c4a464">&#8226;</span><span>'+p1+'</span></div>';});h=h.replace(/\n\n/g,'<br><br>');h=h.replace(/\n/g,'<br>');return h;}
 export default function LexIA() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -271,8 +272,8 @@ export default function LexIA() {
               </div>
               <div style={{maxWidth:'78%'}}>
                 {msg.webSearch&&<div style={{fontSize:10,color:'#6aabff',marginBottom:4}}>{IC.globe} Web search</div>}
-                <div style={{padding:'10px 14px',borderRadius:msg.role==='user'?'14px 3px 14px 14px':'3px 14px 14px 14px',background:msg.role==='user'?'rgba(42,74,106,.4)':gf(.08),border:msg.role==='user'?'1px solid rgba(42,74,106,.6)':`1px solid ${gf(.2)}`,fontSize:13,lineHeight:1.75,color:'#e0d4bc',whiteSpace:'pre-wrap'}}>
-                  {msg.content}{msg.role==='assistant'&&status==='streaming'&&i===messages.length-1&&<span style={{animation:'blink 1s infinite',marginLeft:2,color:gold}}>|</span>}
+                <div style={{padding:'10px 14px',borderRadius:msg.role==='user'?'14px 3px 14px 14px':'3px 14px 14px 14px',background:msg.role==='user'?'rgba(42,74,106,.4)':gf(.08),border:msg.role==='user'?'1px solid rgba(42,74,106,.6)':`1px solid ${gf(.2)}`,fontSize:13,lineHeight:1.75,color:'#e0d4bc',}}>
+                  {msg.role==='assistant'?(<span dangerouslySetInnerHTML={{__html:parseMarkdown(msg.content)}}/>):<span style={{whiteSpace:'pre-wrap'}}>{msg.content}</span>}{msg.role==='assistant'&&status==='streaming'&&i===messages.length-1&&<span style={{animation:'blink 1s infinite',marginLeft:2,color:gold}}>|</span>}
                 </div>
               </div>
             </div>
