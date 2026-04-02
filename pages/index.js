@@ -111,20 +111,7 @@ async function extractPdfText(file) {
   return text;
 }
 
-function parseMarkdown(t){
-  if(!t) return '';
-  var h = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  h = h.replace(/^## (.+)$/gm, function(m,p){ return '<div style="font-size:14px;font-weight:700;color:#c4a464;margin:10px 0 4px;border-bottom:1px solid rgba(196,164,100,.2);padding-bottom:2px">'+p+'</div>'; });
-  h = h.replace(/^### (.+)$/gm, function(m,p){ return '<div style="font-size:13px;font-weight:600;color:#d4b474;margin:8px 0 3px">'+p+'</div>'; });
-  var bRe = new RegExp('[*][*](.+?)[*][*]','g');
-  h = h.replace(bRe, function(m,p){ return '<strong style="color:#e8dcc8">'+p+'</strong>'; });
-  h = h.replace(/
-
-/g, '<div style="height:5px"></div>');
-  h = h.replace(/
-/g, '<br>');
-  return h;
-}
+function parseMarkdown(t){if(!t)return '';var h=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');h=h.replace(/^## (.+)$/gm,function(m,p){return '<div style="font-size:14px;font-weight:700;color:#c4a464;margin:10px 0 4px;border-bottom:1px solid rgba(196,164,100,.2);padding-bottom:2px">'+p+'</div>';});h=h.replace(/^### (.+)$/gm,function(m,p){return '<div style="font-size:13px;font-weight:600;color:#d4b474;margin:8px 0 3px">'+p+'</div>';});var bRe=new RegExp('[*][*](.+?)[*][*]','g');h=h.replace(bRe,function(m,p){return '<strong style="color:#e8dcc8">'+p+'</strong>';});h=h.replace(/\n\n/g,'<div style="height:5px"></div>');h=h.replace(/\n/g,'<br>');return h;}
 
 export default function LexIA() {
   const [messages, setMessages] = useState([]);
