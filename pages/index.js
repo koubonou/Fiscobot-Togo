@@ -31,14 +31,14 @@ const LANG = {
       heroTitle: 'Votre intelligence fiscale et comptable IA à votre Service',
       heroSub: 'CGI 2025 \u00b7 LF2026 \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
       suggs: ['Taux IS & p\u00e9nalit\u00e9s ?','TVA \u2014 seuil & d\u00e9lais ?','SYSCOHADA \u2014 classe 6 ?','Nouveaut\u00e9s LF 2026 ?','ONG \u2014 r\u00e9gime fiscal ?','Amortissement mat\u00e9riel ?'],
-      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI Togo OTR 2025, LPF, LF2025, LF2026, SYSCOHADA 2017, OHADA, ONG/EBNL.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur otr.tg. Cite les articles. Ne pas inventer.\nFORMAT: ## Titre\n**Principe**:\n**D\u00e9tails**:\n\u2022 point\n**Exemple chiffr\u00e9 en FCFA**: [montant + calcul]\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX',
+      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI Togo OTR 2025, LPF, LF2025, LF2026, SYSCOHADA 2017, OHADA, ONG/EBNL.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur otr.tg. Cite les articles. Expertise senior. Cite articles exacts. Si tu ne sais pas dis-le. Tiens compte contexte conversation.\nFORMAT: ## Titre\n**Principe**: [r\u00e8gle g\u00e9n\u00e9rale]\n**Analyse**: [application au cas pos\u00e9]\n**Exemple chiffr\u00e9 en FCFA**: [calcul r\u00e9el]\n**\u26a0\ufe0f Points de vigilance**: [erreurs courantes \u00e0 \u00e9viter]\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX',
     },
     sn: {
       placeholder: 'Posez votre question fiscale ou comptable\u2026',
       heroTitle: 'Votre intelligence fiscale et comptable IA à votre Service',
       heroSub: 'CGI S\u00e9n\u00e9gal \u00b7 DGID \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
       suggs: ['IS S\u00e9n\u00e9gal \u2014 taux 30% ?','TVA \u2014 seuil 50M FCFA ?','CGU \u2014 petites entreprises ?','ONG \u2014 r\u00e9gime fiscal ?','IPRES & CSS ?','Code des investissements ?'],
-      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI S\u00e9n\u00e9gal DGID 2025, UEMOA, SYSCOHADA 2017, ONG/EBNL S\u00e9n\u00e9gal.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur impotsetdomaines.gouv.sn. Cite les articles. Ne pas inventer.\nFORMAT: ## Titre\n**Principe**:\n**D\u00e9tails**:\n\u2022 point\n**Exemple chiffr\u00e9 en FCFA**: [montant + calcul]\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX | DGID',
+      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI S\u00e9n\u00e9gal DGID 2025, UEMOA, SYSCOHADA 2017, ONG/EBNL S\u00e9n\u00e9gal.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur impotsetdomaines.gouv.sn. Cite les articles. Expertise senior. Cite articles exacts. Si tu ne sais pas dis-le. Tiens compte contexte conversation.\nFORMAT: ## Titre\n**Principe**: [r\u00e8gle g\u00e9n\u00e9rale]\n**Analyse**: [application au cas pos\u00e9]\n**Exemple chiffr\u00e9 en FCFA**: [calcul r\u00e9el]\n**\u26a0\ufe0f Points de vigilance**: [erreurs courantes \u00e0 \u00e9viter]\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX | DGID',
     },
   },
   en: {
@@ -47,14 +47,14 @@ const LANG = {
       heroTitle: 'Your AI tax & accounting expert',
       heroSub: 'CGI 2025 \u00b7 LF2026 \u00b7 SYSCOHADA \u00b7 Answers in seconds',
       suggs: ['Corporate tax & penalties?','VAT threshold & deadlines?','SYSCOHADA class 6?','New LF 2026 measures?','NGO tax regime?','Equipment depreciation?'],
-      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Togo CGI OTR 2025, Finance Laws 2025/2026, SYSCOHADA 2017, OHADA, NGO/EBNL.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search otr.tg. Cite exact articles. Never invent.\nFORMAT: ## Title\n**Principle**:\n**Details**:\n\u2022 point\n**Numerical example in FCFA**: [amount + calculation]\n**\ud83d\udccc References**: Art. XX',
+      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Togo CGI OTR 2025, Finance Laws 2025/2026, SYSCOHADA 2017, OHADA, NGO/EBNL.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search otr.tg. Cite exact articles. Senior expertise. Always cite exact articles. If unsure say so. Use conversation context.\nFORMAT: ## Title\n**Principle**: [general rule]\n**Analysis**: [application to case]\n**Numerical example in FCFA**: [real calculation]\n**\u26a0\ufe0f Watch out**: [common mistakes]\n**\ud83d\udccc References**: Art. XX',
     },
     sn: {
       placeholder: 'Ask your tax or accounting question\u2026',
       heroTitle: 'Your AI tax & accounting expert',
       heroSub: 'Senegal CGI \u00b7 DGID \u00b7 SYSCOHADA \u00b7 Answers in seconds',
       suggs: ['Corporate tax Senegal 30%?','VAT 50M FCFA threshold?','CGU small business regime?','NGO tax regime?','IPRES & CSS contributions?','Investment Code?'],
-      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Senegal CGI DGID 2025, UEMOA, SYSCOHADA 2017, NGO/EBNL Senegal.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search impotsetdomaines.gouv.sn. Cite exact articles. Never invent.\nFORMAT: ## Title\n**Principle**:\n**Details**:\n\u2022 point\n**Numerical example in FCFA**: [amount + calculation]\n**\ud83d\udccc References**: Art. XX | DGID',
+      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Senegal CGI DGID 2025, UEMOA, SYSCOHADA 2017, NGO/EBNL Senegal.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search impotsetdomaines.gouv.sn. Cite exact articles. Senior expertise. Always cite exact articles. If unsure say so. Use conversation context.\nFORMAT: ## Title\n**Principle**: [general rule]\n**Analysis**: [application to case]\n**Numerical example in FCFA**: [real calculation]\n**\u26a0\ufe0f Watch out**: [common mistakes]\n**\ud83d\udccc References**: Art. XX | DGID',
     },
   },
 };
@@ -169,13 +169,13 @@ export default function LexIA() {
     const prevMsgs = messages.slice(-8).map(function(m){ return {role:m.role,content:typeof m.content==='string'?m.content.slice(-1000):''};});
     setMessages(prev => [...prev, { role:'user', content:question }]);
     const expanded = expandQuery(question);
-    const hitsMain = searchKB(expanded, 3);
-    const hits2025 = searchKB2025(expanded, 2);
-    const hits2026 = searchKBLF2026(expanded, 2);
-    const hitsSYSCO = searchKBSYSCOHADA(expanded, 2);
+    const hitsMain = searchKB(expanded, 5);
+    const hits2025 = searchKB2025(expanded, 3);
+    const hits2026 = searchKBLF2026(expanded, 3);
+    const hitsSYSCO = searchKBSYSCOHADA(expanded, 3);
     const hitsSEN = country==='sn' ? searchKBSENEGAL(expanded, 4) : searchKBSENEGAL(expanded, 1);
-    const hitsNFPTG = searchKBNFPTOGO(expanded, 2);
-    const hitsNFPSN = country==='sn' ? searchKBNFPSENEGAL(expanded, 2) : searchKBNFPSENEGAL(expanded, 1);
+    const hitsNFPTG = searchKBNFPTOGO(expanded, 3);
+    const hitsNFPSN = country==='sn' ? searchKBNFPSENEGAL(expanded, 3) : searchKBNFPSENEGAL(expanded, 1);
     const hits = country==='sn'
       ? [...hitsSEN, ...hitsNFPSN, ...hitsSYSCO, ...hitsNFPTG, ...hitsMain]
       : [...hitsMain, ...hits2025, ...hits2026, ...hitsSYSCO, ...hitsSEN, ...hitsNFPTG, ...hitsNFPSN];
