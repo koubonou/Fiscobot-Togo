@@ -31,14 +31,14 @@ const LANG = {
       heroTitle: 'Votre intelligence fiscale et comptable IA à votre Service',
       heroSub: 'CGI 2025 \u00b7 LF2026 \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
       suggs: ['Taux IS & p\u00e9nalit\u00e9s ?','TVA \u2014 seuil & d\u00e9lais ?','SYSCOHADA \u2014 classe 6 ?','Nouveaut\u00e9s LF 2026 ?','ONG \u2014 r\u00e9gime fiscal ?','Amortissement mat\u00e9riel ?'],
-      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI Togo OTR 2025, LPF, LF2025, LF2026, SYSCOHADA 2017, OHADA, ONG/EBNL.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur otr.tg. Cite les articles. Ne pas inventer.\nFORMAT: ## Titre\n**Principe**:\n**D\u00e9tails**:\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX',
+      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI Togo OTR 2025, LPF, LF2025, LF2026, SYSCOHADA 2017, OHADA, ONG/EBNL.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur otr.tg. Cite les articles. Ne pas inventer.\nFORMAT: ## Titre\n**Principe**:\n**D\u00e9tails**:\n\u2022 point\n**Exemple chiffr\u00e9 en FCFA**: [montant + calcul]\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX',
     },
     sn: {
       placeholder: 'Posez votre question fiscale ou comptable\u2026',
       heroTitle: 'Votre intelligence fiscale et comptable IA à votre Service',
       heroSub: 'CGI S\u00e9n\u00e9gal \u00b7 DGID \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
       suggs: ['IS S\u00e9n\u00e9gal \u2014 taux 30% ?','TVA \u2014 seuil 50M FCFA ?','CGU \u2014 petites entreprises ?','ONG \u2014 r\u00e9gime fiscal ?','IPRES & CSS ?','Code des investissements ?'],
-      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI S\u00e9n\u00e9gal DGID 2025, UEMOA, SYSCOHADA 2017, ONG/EBNL S\u00e9n\u00e9gal.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur impotsetdomaines.gouv.sn. Cite les articles. Ne pas inventer.\nFORMAT: ## Titre\n**Principe**:\n**D\u00e9tails**:\n\u2022 point\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX | DGID',
+      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI S\u00e9n\u00e9gal DGID 2025, UEMOA, SYSCOHADA 2017, ONG/EBNL S\u00e9n\u00e9gal.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur impotsetdomaines.gouv.sn. Cite les articles. Ne pas inventer.\nFORMAT: ## Titre\n**Principe**:\n**D\u00e9tails**:\n\u2022 point\n**Exemple chiffr\u00e9 en FCFA**: [montant + calcul]\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX | DGID',
     },
   },
   en: {
@@ -47,14 +47,14 @@ const LANG = {
       heroTitle: 'Your AI tax & accounting expert',
       heroSub: 'CGI 2025 \u00b7 LF2026 \u00b7 SYSCOHADA \u00b7 Answers in seconds',
       suggs: ['Corporate tax & penalties?','VAT threshold & deadlines?','SYSCOHADA class 6?','New LF 2026 measures?','NGO tax regime?','Equipment depreciation?'],
-      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Togo CGI OTR 2025, Finance Laws 2025/2026, SYSCOHADA 2017, OHADA, NGO/EBNL.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search otr.tg. Cite exact articles. Never invent.\nFORMAT: ## Title\n**Principle**:\n**Details**:\n\u2022 point\n**\ud83d\udccc References**: Art. XX',
+      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Togo CGI OTR 2025, Finance Laws 2025/2026, SYSCOHADA 2017, OHADA, NGO/EBNL.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search otr.tg. Cite exact articles. Never invent.\nFORMAT: ## Title\n**Principle**:\n**Details**:\n\u2022 point\n**Numerical example in FCFA**: [amount + calculation]\n**\ud83d\udccc References**: Art. XX',
     },
     sn: {
       placeholder: 'Ask your tax or accounting question\u2026',
       heroTitle: 'Your AI tax & accounting expert',
       heroSub: 'Senegal CGI \u00b7 DGID \u00b7 SYSCOHADA \u00b7 Answers in seconds',
       suggs: ['Corporate tax Senegal 30%?','VAT 50M FCFA threshold?','CGU small business regime?','NGO tax regime?','IPRES & CSS contributions?','Investment Code?'],
-      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Senegal CGI DGID 2025, UEMOA, SYSCOHADA 2017, NGO/EBNL Senegal.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search impotsetdomaines.gouv.sn. Cite exact articles. Never invent.\nFORMAT: ## Title\n**Principle**:\n**Details**:\n\u2022 point\n**\ud83d\udccc References**: Art. XX | DGID',
+      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Senegal CGI DGID 2025, UEMOA, SYSCOHADA 2017, NGO/EBNL Senegal.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search impotsetdomaines.gouv.sn. Cite exact articles. Never invent.\nFORMAT: ## Title\n**Principle**:\n**Details**:\n\u2022 point\n**Numerical example in FCFA**: [amount + calculation]\n**\ud83d\udccc References**: Art. XX | DGID',
     },
   },
 };
@@ -166,6 +166,7 @@ export default function LexIA() {
     if (!question || status==='loading' || status==='streaming') return;
     setInput(''); setStatus('loading'); setPhase(0);
     timerRef.current = setInterval(() => setPhase(p=>(p+1)%phases.length), 2200);
+    const prevMsgs = messages.slice(-8).map(function(m){ return {role:m.role,content:typeof m.content==='string'?m.content.slice(-1000):''};});
     setMessages(prev => [...prev, { role:'user', content:question }]);
     const expanded = expandQuery(question);
     const hitsMain = searchKB(expanded, 3);
@@ -186,7 +187,7 @@ export default function LexIA() {
     try {
       clearInterval(timerRef.current);
       setStatus('streaming');
-      const res = await fetch('/api/chat', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stream:true,system:T.systemPrompt,messages:[{role:'user',content:userMsg}]})});
+      const res = await fetch('/api/chat', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stream:true,system:T.systemPrompt,messages:[...prevMsgs,{role:'user',content:userMsg}]})});
       if (!res.ok) throw new Error('Server error '+res.status);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
