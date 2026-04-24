@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+const SUPA_URL='https://fbwidkeamnwqkskxqqdu.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZid2lka2VhbW53cWtza3hxcWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0ODE5NDYsImV4cCI6MjA5MDA1Nzk0Nn0.P_MRuanbQqf1AKYgtvgQ-OiqJNCgTKVzuDkwTFed-Yk';
 import { Analytics } from '@vercel/analytics/react';
 import { searchKB, KB_N } from '../lib/kb';
 import { searchKB2025, KB_2025_N } from '../lib/kb_cahier2025';
@@ -117,6 +119,13 @@ export default function LexIA() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState('idle');
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginSent, setLoginSent] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [userPlan, setUserPlan] = useState('free');
+  const [questionsLeft, setQuestionsLeft] = useState(5);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [phase, setPhase] = useState(0);
   const [extraDocs, setExtraDocs] = useState('');
   const [showDocs, setShowDocs] = useState(false);
@@ -164,6 +173,7 @@ export default function LexIA() {
   const send = async (q) => {
     const question = q || input.trim();
     if (!question || status==='loading' || status==='streaming') return;
+    if(userPlan!=='pro'&&questionsLeft<=0){setMessages(prev=>[...prev,{role:'user',content:question},{role:'assistant',content:'## Limite atteinte\n\nVous avez utilisé vos **5 questions gratuites** du jour.\n\n**⚠️ Points de vigilance** : Revenez demain pour 5 nouvelles questions gratuites.\n\nPour un accès illimité, contactez-nous :\n📧 falconauditconsulting@gmail.com\nWhatsApp: +228 90 06 83 20'}]);setInput('');return;}
     setInput(''); setStatus('loading'); setPhase(0);
     timerRef.current = setInterval(() => setPhase(p=>(p+1)%phases.length), 2200);
     const prevMsgs = messages.slice(-8).map(function(m){ return {role:m.role,content:typeof m.content==='string'?m.content.slice(-1000):''};});
@@ -210,6 +220,7 @@ export default function LexIA() {
         }
       }
       if (!fullText) throw new Error(lang==='fr'?'R\u00e9ponse vide.':'Empty response.');
+      if(userEmail)updateQuota(userEmail);
       setStatus('idle');
     } catch(err) {
       clearInterval(timerRef.current);
@@ -220,6 +231,80 @@ export default function LexIA() {
 
   const gold = '#c4a464';
   const gf = o => `rgba(196,164,100,${o})`;
+
+  useEffect(()=>{
+    const saved=localStorage.getItem('lexia_email');
+    if(saved){setLoggedIn(true);setUserEmail(saved);checkQuota(saved);}
+    else setCheckingAuth(false);
+  },[]);
+
+  async function checkQuota(email){
+    setCheckingAuth(false);
+    const today=new Date().toISOString().split('T')[0];
+    try{
+      const r=await fetch(SUPA_URL+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+      const data=await r.json();
+      if(data&&data[0]){
+        const u=data[0];const limit=u.plan==='pro'?999:5;
+        const used=u.last_reset===today?(u.questions_today||0):0;
+        setUserPlan(u.plan||'free');setQuestionsLeft(Math.max(0,limit-used));
+      }else{
+        await fetch(SUPA_URL+'/rest/v1/lexia_users',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,plan:'free',questions_today:0,last_reset:today,daily_limit:5})});
+        setQuestionsLeft(5);
+      }
+    }catch(e){}
+  }
+
+  async function handleLogin(e){
+    e.preventDefault();if(!loginEmail)return;
+    try{await fetch(SUPA_URL+'/auth/v1/otp',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:loginEmail,create_user:true})});setLoginSent(true);}catch(e){}
+  }
+
+  function logout(){
+    localStorage.removeItem('lexia_email');
+    setLoggedIn(false);setUserEmail('');setMessages([]);setQuestionsLeft(5);setUserPlan('free');
+  }
+
+  async function updateQuota(email){
+    const today=new Date().toISOString().split('T')[0];
+    try{
+      const r=await fetch(SUPA_URL+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+      const data=await r.json();
+      if(data&&data[0]){
+        const u=data[0];const used=u.last_reset===today?(u.questions_today||0)+1:1;
+        await fetch(SUPA_URL+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{method:'PATCH',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({questions_today:used,last_reset:today})});
+        const limit=userPlan==='pro'?999:5;setQuestionsLeft(Math.max(0,limit-used));
+      }
+    }catch(e){}
+  }
+
+
+  if(checkingAuth) return(<div style={{minHeight:'100vh',background:'#0d1b2a',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{color:'#c4a464',fontSize:14}}>Chargement...</div></div>);
+
+  if(!loggedIn) return(
+    <div style={{minHeight:'100vh',background:'#0d1b2a',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Georgia,serif'}}>
+      <div style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(196,164,100,.2)',borderRadius:16,padding:'40px 36px',maxWidth:400,width:'90%',textAlign:'center'}}>
+        <div style={{fontSize:36,fontStyle:'italic',color:'#c4a464',marginBottom:4}}>Lx</div>
+        <div style={{fontSize:20,fontWeight:700,color:'#e8dcc8',marginBottom:8}}>LexIA</div>
+        <div style={{fontSize:13,color:'#8a9ab5',marginBottom:24}}>Votre copilot fiscal OHADA</div>
+        {!loginSent?(
+          <form onSubmit={handleLogin}>
+            <input type="email" placeholder="Votre adresse email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} required style={{width:'100%',padding:'12px 14px',borderRadius:8,border:'1px solid rgba(196,164,100,.3)',background:'rgba(255,255,255,.06)',color:'#e8dcc8',fontSize:13,marginBottom:12,boxSizing:'border-box',outline:'none'}}/>
+            <button type="submit" style={{width:'100%',padding:'12px',borderRadius:8,background:'#c4a464',border:'none',color:'#0d1b2a',fontWeight:700,fontSize:14,cursor:'pointer'}}>Recevoir mon lien de connexion</button>
+            <div style={{fontSize:11,color:'#5a6a7a',marginTop:12}}>Gratuit · 5 questions/jour · Sans mot de passe</div>
+          </form>
+        ):(
+          <div>
+            <div style={{fontSize:40,marginBottom:16}}>📧</div>
+            <div style={{color:'#e8dcc8',fontSize:14,marginBottom:8}}>Lien envoyé à <strong style={{color:'#c4a464'}}>{loginEmail}</strong></div>
+            <div style={{color:'#8a9ab5',fontSize:12}}>Vérifiez votre boîte mail et cliquez sur le lien pour vous connecter.</div>
+            <button onClick={()=>setLoginSent(false)} style={{marginTop:16,background:'transparent',border:'1px solid rgba(196,164,100,.3)',color:'#c4a464',padding:'8px 16px',borderRadius:6,cursor:'pointer',fontSize:12}}>Changer d email</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
 
   return (
     <div style={{fontFamily:'Georgia,serif',background:'linear-gradient(135deg,#0f1923,#1a2a3a)',minHeight:'100vh',color:'#e8dcc8',display:'flex',flexDirection:'column'}}>
