@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-const SUPA_URL='https://fbwidkeamnwqkskxqqdu.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZid2lka2VhbW53cWtza3hxcWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0ODE5NDYsImV4cCI6MjA5MDA1Nzk0Nn0.P_MRuanbQqf1AKYgtvgQ-OiqJNCgTKVzuDkwTFed-Yk';
+const SUPA='https://fbwidkeamnwqkskxqqdu.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZid2lka2VhbW53cWtza3hxcWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0ODE5NDYsImV4cCI6MjA5MDA1Nzk0Nn0.P_MRuanbQqf1AKYgtvgQ-OiqJNCgTKVzuDkwTFed-Yk';
 import { Analytics } from '@vercel/analytics/react';
 import { searchKB, KB_N } from '../lib/kb';
 import { searchKB2025, KB_2025_N } from '../lib/kb_cahier2025';
@@ -242,14 +242,14 @@ export default function LexIA() {
     setCheckingAuth(false);
     const today=new Date().toISOString().split('T')[0];
     try{
-      const r=await fetch(SUPA_URL+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+      const r=await fetch(SUPA+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
       const data=await r.json();
       if(data&&data[0]){
         const u=data[0];const limit=u.plan==='pro'?999:5;
         const used=u.last_reset===today?(u.questions_today||0):0;
         setUserPlan(u.plan||'free');setQuestionsLeft(Math.max(0,limit-used));
       }else{
-        await fetch(SUPA_URL+'/rest/v1/lexia_users',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,plan:'free',questions_today:0,last_reset:today,daily_limit:5})});
+        await fetch(SUPA+'/rest/v1/lexia_users',{method:'POST',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'},body:JSON.stringify({email,plan:'free',questions_today:0,last_reset:today,daily_limit:5})});
         setQuestionsLeft(5);
       }
     }catch(e){}
@@ -257,7 +257,7 @@ export default function LexIA() {
 
   async function handleLogin(e){
     e.preventDefault();if(!loginEmail)return;
-    try{await fetch(SUPA_URL+'/auth/v1/otp',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:loginEmail,create_user:true})});setLoginSent(true);}catch(e){}
+    try{await fetch(SUPA+'/auth/v1/otp',{method:'POST',headers:{'apikey':SKEY,'Content-Type':'application/json'},body:JSON.stringify({email:loginEmail,create_user:true})});setLoginSent(true);}catch(e){}
   }
 
   function logout(){
@@ -268,11 +268,11 @@ export default function LexIA() {
   async function updateQuota(email){
     const today=new Date().toISOString().split('T')[0];
     try{
-      const r=await fetch(SUPA_URL+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+      const r=await fetch(SUPA+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
       const data=await r.json();
       if(data&&data[0]){
         const u=data[0];const used=u.last_reset===today?(u.questions_today||0)+1:1;
-        await fetch(SUPA_URL+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{method:'PATCH',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({questions_today:used,last_reset:today})});
+        await fetch(SUPA+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{method:'PATCH',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'},body:JSON.stringify({questions_today:used,last_reset:today})});
         const limit=userPlan==='pro'?999:5;setQuestionsLeft(Math.max(0,limit-used));
       }
     }catch(e){}
