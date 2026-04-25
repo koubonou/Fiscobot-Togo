@@ -259,25 +259,45 @@ export default function LexIA() {
 
   if(!authReady)return(<div style={{minHeight:"100vh",background:"#0d1b2a",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#c4a464"}}>Chargement...</span></div>);
   if(!user)return(
-    <div style={{minHeight:"100vh",background:"#0d1b2a",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(196,164,100,.2)",borderRadius:16,padding:"40px 36px",maxWidth:400,width:"90%",textAlign:"center"}}>
-        <div style={{fontSize:36,fontStyle:"italic",color:"#c4a464",marginBottom:4}}>Lx</div>
-        <div style={{fontSize:20,fontWeight:700,color:"#e8dcc8",marginBottom:8}}>LexIA</div>
-        <div style={{fontSize:13,color:"#8a9ab5",marginBottom:28}}>Intelligence fiscale OHADA</div>
-        {sent?(
+    <div style={{minHeight:"100vh",background:"#0d1b2a",display:"flex",flexDirection:"column",fontFamily:"Georgia,serif"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 24px",borderBottom:"1px solid rgba(196,164,100,.15)",background:"rgba(13,27,42,.95)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:36,height:36,background:"linear-gradient(135deg,#c4a464,#8b6914)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontStyle:"italic",fontWeight:"bold",color:"#0d1b2a",fontSize:18}}>Lx</div>
           <div>
-            <div style={{fontSize:14,color:"#e8dcc8",marginBottom:8}}>Lien envoye a <strong style={{color:"#c4a464"}}>{email}</strong></div>
-            <div style={{fontSize:12,color:"#8a9ab5",marginBottom:16}}>Cliquez le lien dans votre email.</div>
-            <button onClick={function(){setSent(false);}} style={{background:"transparent",border:"1px solid rgba(196,164,100,.3)",color:"#c4a464",padding:"8px 16px",borderRadius:6,cursor:"pointer",fontSize:12}}>Changer email</button>
+            <div style={{fontWeight:"bold",fontSize:15,color:"#e8dcc8"}}>LexIA</div>
+            <div style={{fontSize:9,color:"gold",letterSpacing:"1.2px",textTransform:"uppercase"}}>Falcon Audit &amp; Consulting (FAC)</div>
           </div>
-        ):(
-          <form onSubmit={doLogin}>
-            <input type="email" placeholder="Votre email" value={email} onChange={function(e){setEmail(e.target.value);}} required style={{width:"100%",padding:"12px 14px",borderRadius:8,border:"1px solid rgba(196,164,100,.3)",background:"rgba(255,255,255,.06)",color:"#e8dcc8",fontSize:13,marginBottom:12,boxSizing:"border-box",outline:"none"}} />
-            <button type="submit" style={{width:"100%",padding:"12px",borderRadius:8,background:"#c4a464",border:"none",color:"#0d1b2a",fontWeight:700,fontSize:14,cursor:"pointer"}}>Recevoir mon lien de connexion</button>
-            <div style={{fontSize:11,color:"#5a6a7a",marginTop:12}}>Gratuit - 5 questions/jour</div>
-          </form>
-        )}
+        </div>
+        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+          <div style={{display:"flex",border:"1px solid rgba(196,164,100,.3)",borderRadius:12,overflow:"hidden"}}>
+            <button style={{padding:"3px 8px",background:"rgba(196,164,100,.25)",color:"#c4a464",border:"none",cursor:"pointer",fontSize:11}}>TG</button>
+            <button style={{padding:"3px 8px",background:"transparent",color:"#5a7a8a",border:"none",cursor:"pointer",fontSize:11}}>SN</button>
+          </div>
+          <div style={{fontSize:11,color:"#4a6478",background:"rgba(100,196,120,.1)",border:"1px solid rgba(100,196,120,.2)",borderRadius:12,padding:"3px 9px"}}>IA - Togo 2026</div>
+          <button style={{padding:"3px 9px",border:"1px solid rgba(196,164,100,.4)",borderRadius:12,background:"transparent",color:"#c4a464",fontSize:11,cursor:"pointer"}}>FR</button>
+        </div>
       </div>
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px"}}>
+        <div style={{fontSize:72,fontStyle:"italic",color:"#c4a464",marginBottom:8,lineHeight:1}}>Lx</div>
+        <div style={{fontSize:22,fontWeight:700,color:"#e8dcc8",marginBottom:8,textAlign:"center",maxWidth:600}}>Votre intelligence fiscale et comptable IA a votre Service</div>
+        <div style={{fontSize:13,color:"#5a7a8a",marginBottom:40,textAlign:"center"}}>CGI 2025 - LF2026 - SYSCOHADA - Reponses en secondes</div>
+        <div style={{width:"100%",maxWidth:480}}>
+          {sent?(
+            <div style={{textAlign:"center",background:"rgba(255,255,255,.04)",border:"1px solid rgba(196,164,100,.2)",borderRadius:16,padding:"32px 24px"}}>
+              <div style={{fontSize:14,color:"#e8dcc8",marginBottom:8}}>Lien envoye a <strong style={{color:"#c4a464"}}>{email}</strong></div>
+              <div style={{fontSize:12,color:"#8a9ab5",marginBottom:16}}>Cliquez le lien dans votre email pour acceder a LexIA.</div>
+              <button onClick={function(){setSent(false);}} style={{background:"transparent",border:"1px solid rgba(196,164,100,.3)",color:"#c4a464",padding:"8px 20px",borderRadius:8,cursor:"pointer",fontSize:12}}>Changer email</button>
+            </div>
+          ):(
+            <form onSubmit={doLogin} style={{display:"flex",flexDirection:"column",gap:12}}>
+              <input type="email" placeholder="Entrez votre adresse email..." value={email} onChange={function(e){setEmail(e.target.value);}} required style={{width:"100%",padding:"16px 20px",borderRadius:12,border:"1px solid rgba(196,164,100,.25)",background:"rgba(255,255,255,.05)",color:"#e8dcc8",fontSize:14,boxSizing:"border-box",outline:"none"}} />
+              <button type="submit" style={{width:"100%",padding:"16px",borderRadius:12,background:"linear-gradient(135deg,#c4a464,#8b6914)",border:"none",color:"#0d1b2a",fontWeight:700,fontSize:15,cursor:"pointer"}}>Recevoir mon lien de connexion</button>
+              <div style={{textAlign:"center",fontSize:12,color:"#4a6478"}}>Gratuit - 5 questions/jour - Sans mot de passe</div>
+            </form>
+          )}
+        </div>
+      </div>
+      <div style={{textAlign:"center",paddingBottom:12,fontSize:11,color:"#2a3a4a"}}>LexIA by Falcon Accounting &amp; Tax Solutions - USA</div>
     </div>
   );
 
