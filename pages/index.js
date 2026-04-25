@@ -1,6 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-const SUPA='https://fbwidkeamnwqkskxqqdu.supabase.co';
-const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZid2lka2VhbW53cWtza3hxcWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0ODE5NDYsImV4cCI6MjA5MDA1Nzk0Nn0.P_MRuanbQqf1AKYgtvgQ-OiqJNCgTKVzuDkwTFed-Yk';
 import { Analytics } from '@vercel/analytics/react';
 import { searchKB, KB_N } from '../lib/kb';
 import { searchKB2025, KB_2025_N } from '../lib/kb_cahier2025';
@@ -119,13 +117,6 @@ export default function LexIA() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState('idle');
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginSent, setLoginSent] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
-  const [userPlan, setUserPlan] = useState('free');
-  const [questionsLeft, setQuestionsLeft] = useState(5);
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const [phase, setPhase] = useState(0);
   const [extraDocs, setExtraDocs] = useState('');
   const [showDocs, setShowDocs] = useState(false);
@@ -173,7 +164,6 @@ export default function LexIA() {
   const send = async (q) => {
     const question = q || input.trim();
     if (!question || status==='loading' || status==='streaming') return;
-    if(userPlan!=='pro'&&questionsLeft<=0){setMessages(prev=>[...prev,{role:'user',content:question},{role:'assistant',content:'## Limite atteinte\n\nVous avez utilisé vos **5 questions gratuites** du jour.\n\n**⚠️ Points de vigilance** : Revenez demain pour 5 nouvelles questions gratuites.\n\nPour un accès illimité, contactez-nous :\n📧 falconauditconsulting@gmail.com\nWhatsApp: +228 90 06 83 20'}]);setInput('');return;}
     setInput(''); setStatus('loading'); setPhase(0);
     timerRef.current = setInterval(() => setPhase(p=>(p+1)%phases.length), 2200);
     const prevMsgs = messages.slice(-8).map(function(m){ return {role:m.role,content:typeof m.content==='string'?m.content.slice(-1000):''};});
@@ -220,7 +210,6 @@ export default function LexIA() {
         }
       }
       if (!fullText) throw new Error(lang==='fr'?'R\u00e9ponse vide.':'Empty response.');
-      if(userEmail)updateQuota(userEmail);
       setStatus('idle');
     } catch(err) {
       clearInterval(timerRef.current);
@@ -230,86 +219,12 @@ export default function LexIA() {
   };
 
   const gold = '#c4a464';
-  const gf = o => 'rgba(196,164,100,'+o+')';
-
-  useEffect(()=>{
-    const saved=localStorage.getItem('lexia_email');
-    if(saved){setLoggedIn(true);setUserEmail(saved);checkQuota(saved);}
-    else setCheckingAuth(false);
-  },[]);
-
-  async function checkQuota(email){
-    setCheckingAuth(false);
-    const today=new Date().toISOString().split('T')[0];
-    try{
-      const r=await fetch(SUPA+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
-      const data=await r.json();
-      if(data&&data[0]){
-        const u=data[0];const limit=u.plan==='pro'?999:5;
-        const used=u.last_reset===today?(u.questions_today||0):0;
-        setUserPlan(u.plan||'free');setQuestionsLeft(Math.max(0,limit-used));
-      }else{
-        await fetch(SUPA+'/rest/v1/lexia_users',{method:'POST',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'},body:JSON.stringify({email,plan:'free',questions_today:0,last_reset:today,daily_limit:5})});
-        setQuestionsLeft(5);
-      }
-    }catch(e){}
-  }
-
-  async function handleLogin(e){
-    e.preventDefault();if(!loginEmail)return;
-    try{await fetch(SUPA+'/auth/v1/otp',{method:'POST',headers:{'apikey':SKEY,'Content-Type':'application/json'},body:JSON.stringify({email:loginEmail,create_user:true})});setLoginSent(true);}catch(e){}
-  }
-
-  function logout(){
-    localStorage.removeItem('lexia_email');
-    setLoggedIn(false);setUserEmail('');setMessages([]);setQuestionsLeft(5);setUserPlan('free');
-  }
-
-  async function updateQuota(email){
-    const today=new Date().toISOString().split('T')[0];
-    try{
-      const r=await fetch(SUPA+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY}});
-      const data=await r.json();
-      if(data&&data[0]){
-        const u=data[0];const used=u.last_reset===today?(u.questions_today||0)+1:1;
-        await fetch(SUPA+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(email),{method:'PATCH',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json'},body:JSON.stringify({questions_today:used,last_reset:today})});
-        const limit=userPlan==='pro'?999:5;setQuestionsLeft(Math.max(0,limit-used));
-      }
-    }catch(e){}
-  }
-
-
-  if(checkingAuth) return(<div style={{minHeight:'100vh',background:'#0d1b2a',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{color:'#c4a464',fontSize:14}}>Chargement...</div></div>);
-
-  if(!loggedIn) return(
-    <div style={{minHeight:'100vh',background:'#0d1b2a',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Georgia,serif'}}>
-      <div style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(196,164,100,.2)',borderRadius:16,padding:'40px 36px',maxWidth:400,width:'90%',textAlign:'center'}}>
-        <div style={{fontSize:36,fontStyle:'italic',color:'#c4a464',marginBottom:4}}>Lx</div>
-        <div style={{fontSize:20,fontWeight:700,color:'#e8dcc8',marginBottom:8}}>LexIA</div>
-        <div style={{fontSize:13,color:'#8a9ab5',marginBottom:24}}>Votre copilot fiscal OHADA</div>
-        {!loginSent?(
-          <form onSubmit={handleLogin}>
-            <input type="email" placeholder="Votre adresse email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} required style={{width:'100%',padding:'12px 14px',borderRadius:8,border:'1px solid rgba(196,164,100,.3)',background:'rgba(255,255,255,.06)',color:'#e8dcc8',fontSize:13,marginBottom:12,boxSizing:'border-box',outline:'none'}}/>
-            <button type="submit" style={{width:'100%',padding:'12px',borderRadius:8,background:'#c4a464',border:'none',color:'#0d1b2a',fontWeight:700,fontSize:14,cursor:'pointer'}}>Recevoir mon lien de connexion</button>
-            <div style={{fontSize:11,color:'#5a6a7a',marginTop:12}}>Gratuit · 5 questions/jour · Sans mot de passe</div>
-          </form>
-        ):(
-          <div>
-            <div style={{fontSize:40,marginBottom:16}}>📧</div>
-            <div style={{color:'#e8dcc8',fontSize:14,marginBottom:8}}>Lien envoyé à <strong style={{color:'#c4a464'}}>{loginEmail}</strong></div>
-            <div style={{color:'#8a9ab5',fontSize:12}}>Vérifiez votre boîte mail et cliquez sur le lien pour vous connecter.</div>
-            <button onClick={()=>setLoginSent(false)} style={{marginTop:16,background:'transparent',border:'1px solid rgba(196,164,100,.3)',color:'#c4a464',padding:'8px 16px',borderRadius:6,cursor:'pointer',fontSize:12}}>Changer d email</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
+  const gf = o => `rgba(196,164,100,${o})`;
 
   return (
     <div style={{fontFamily:'Georgia,serif',background:'linear-gradient(135deg,#0f1923,#1a2a3a)',minHeight:'100vh',color:'#e8dcc8',display:'flex',flexDirection:'column'}}>
       <style>{`@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}*{box-sizing:border-box;margin:0;padding:0}html,body,#__next{height:100%}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(196,164,100,.3);border-radius:4px}`}</style>
-      <div style={{borderBottom:'1px solid '+gf(.3),padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(0,0,0,.35)'}}>
+      <div style={{borderBottom:`1px solid ${gf(.3)}`,padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(0,0,0,.35)'}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <div style={{width:36,height:36,background:'linear-gradient(135deg,#c4a464,#8b6914)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontStyle:'italic',fontWeight:'700',color:'#fff',letterSpacing:'-1px'}}>Lx</div>
           <div>
@@ -318,19 +233,19 @@ export default function LexIA() {
           </div>
         </div>
         <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end'}}>
-          <div style={{display:'flex',border:'1px solid '+gf(.3),borderRadius:12,overflow:'hidden'}}>
+          <div style={{display:'flex',border:`1px solid ${gf(.3)}`,borderRadius:12,overflow:'hidden'}}>
             <button onClick={()=>switchCountry('tg')} style={{padding:'3px 8px',background:country==='tg'?gf(.25):'transparent',color:country==='tg'?gold:'#8a9ab0',cursor:'pointer',border:'none',fontSize:11,fontWeight:country==='tg'?'600':'400'}}>\ud83c\uddf9\ud83c\uddec TG</button>
-            <button onClick={()=>switchCountry('sn')} style={{padding:'3px 8px',background:country==='sn'?gf(.25):'transparent',color:country==='sn'?gold:'#8a9ab0',cursor:'pointer',border:'none',fontSize:11,fontWeight:country==='sn'?'600':'400',borderLeft:'1px solid '+gf(.2)}}>\ud83c\uddf8\ud83c\uddf3 SN</button>
+            <button onClick={()=>switchCountry('sn')} style={{padding:'3px 8px',background:country==='sn'?gf(.25):'transparent',color:country==='sn'?gold:'#8a9ab0',cursor:'pointer',border:'none',fontSize:11,fontWeight:country==='sn'?'600':'400',borderLeft:`1px solid ${gf(.2)}`}}>\ud83c\uddf8\ud83c\uddf3 SN</button>
           </div>
           <div style={{fontSize:11,color:'#64c478',background:'rgba(100,196,120,.1)',border:'1px solid rgba(100,196,120,.25)',borderRadius:12,padding:'3px 8px'}}>{lang==='fr'?C.badge:C.badgeEN}</div>
-          <button onClick={switchLang} style={{padding:'3px 9px',border:'1px solid '+gf(.4),borderRadius:12,background:'transparent',color:gold,cursor:'pointer',fontSize:11,fontWeight:'500'}}>{lang==='fr'?'EN':'FR'}</button>
-          {isAdmin&&<button onClick={()=>setShowDocs(p=>!p)} style={{padding:'3px 8px',border:'1px solid '+gf(.3),borderRadius:12,background:showDocs?gf(.2):'transparent',color:'#c4a464',cursor:'pointer',fontSize:11}}>{IC.pin} Admin</button>}
+          <button onClick={switchLang} style={{padding:'3px 9px',border:`1px solid ${gf(.4)}`,borderRadius:12,background:'transparent',color:gold,cursor:'pointer',fontSize:11,fontWeight:'500'}}>{lang==='fr'?'EN':'FR'}</button>
+          {isAdmin&&<button onClick={()=>setShowDocs(p=>!p)} style={{padding:'3px 8px',border:`1px solid ${gf(.3)}`,borderRadius:12,background:showDocs?gf(.2):'transparent',color:'#c4a464',cursor:'pointer',fontSize:11}}>{IC.pin} Admin</button>}
         </div>
       </div>
       {isAdmin&&showDocs&&(
-        <div style={{background:'rgba(196,164,100,.05)',borderBottom:'1px solid '+gf(.2),padding:'12px 20px'}}>
+        <div style={{background:'rgba(196,164,100,.05)',borderBottom:`1px solid ${gf(.2)}`,padding:'12px 20px'}}>
           <div style={{fontSize:11,color:gold,marginBottom:8}}>{IC.lock} Admin \u2014 {TOTAL_N} sections</div>
-          <div onClick={()=>fileRef.current?.click()} style={{border:'2px dashed '+gf(.4),borderRadius:8,padding:'14px',textAlign:'center',cursor:'pointer',fontSize:12,color:gf(.8)}} onMouseEnter={e=>e.currentTarget.style.background='rgba(196,164,100,.08)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+          <div onClick={()=>fileRef.current?.click()} style={{border:`2px dashed ${gf(.4)}`,borderRadius:8,padding:'14px',textAlign:'center',cursor:'pointer',fontSize:12,color:gf(.8)}} onMouseEnter={e=>e.currentTarget.style.background='rgba(196,164,100,.08)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
             <input ref={fileRef} type='file' accept='.pdf,.txt' multiple onChange={e=>{handleFiles(Array.from(e.target.files));e.target.value='';}} style={{display:'none'}}/>
             <div style={{fontSize:20,marginBottom:4}}>{IC.folder}</div>
             <div>{lang==='fr'?'Cliquer pour ajouter des documents':'Click to add documents'}</div>
@@ -349,7 +264,7 @@ export default function LexIA() {
                 <div style={{fontSize:12,color:'#8a9ab0',maxWidth:480,lineHeight:1.7}}>{T.heroSub}</div>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,width:'100%',maxWidth:580}}>
-                {T.suggs.map((q,i)=>(<button key={i} onClick={()=>send(q)} style={{padding:'8px 11px',background:'rgba(255,255,255,.03)',border:'1px solid '+gf(.2),borderRadius:8,color:'#b8a88a',cursor:'pointer',fontSize:12,textAlign:'left',lineHeight:1.4}}>{IC.arrow} {q}</button>))}
+                {T.suggs.map((q,i)=>(<button key={i} onClick={()=>send(q)} style={{padding:'8px 11px',background:'rgba(255,255,255,.03)',border:`1px solid ${gf(.2)}`,borderRadius:8,color:'#b8a88a',cursor:'pointer',fontSize:12,textAlign:'left',lineHeight:1.4}}>{IC.arrow} {q}</button>))}
               </div>
             </div>
           ):messages.map((msg,i)=>(
@@ -359,19 +274,19 @@ export default function LexIA() {
               </div>
               <div style={{maxWidth:'78%'}}>
                 {msg.webSearch&&<div style={{fontSize:10,color:'#6aabff',marginBottom:4}}>{IC.globe} Web search</div>}
-                <div style={{padding:'10px 14px',borderRadius:msg.role==='user'?'14px 3px 14px 14px':'3px 14px 14px 14px',background:msg.role==='user'?'rgba(42,74,106,.4)':gf(.08),border:msg.role==='user'?'1px solid rgba(42,74,106,.6)':'1px solid '+gf(.2),fontSize:13,lineHeight:1.75,color:'#e0d4bc',}}>
+                <div style={{padding:'10px 14px',borderRadius:msg.role==='user'?'14px 3px 14px 14px':'3px 14px 14px 14px',background:msg.role==='user'?'rgba(42,74,106,.4)':gf(.08),border:msg.role==='user'?'1px solid rgba(42,74,106,.6)':`1px solid ${gf(.2)}`,fontSize:13,lineHeight:1.75,color:'#e0d4bc',}}>
                   {msg.role==='assistant'?(<span dangerouslySetInnerHTML={{__html:parseMarkdown(msg.content)}}/>):<span style={{whiteSpace:'pre-wrap'}}>{msg.content}</span>}{msg.role==='assistant'&&status==='streaming'&&i===messages.length-1&&<span style={{animation:'blink 1s infinite',marginLeft:2,color:gold}}>|</span>}
                 </div>
               </div>
             </div>
           ))}
-          {status==='loading'&&<div style={{display:'flex',gap:10}}><div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontStyle:'italic',fontWeight:'700',color:'#fff'}}>Lx</div><div style={{padding:'10px 16px',background:gf(.08),border:'1px solid '+gf(.2),borderRadius:'3px 14px 14px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{display:'flex',gap:4}}>{[0,1,2].map(j=><div key={j} style={{width:5,height:5,borderRadius:'50%',background:gold,animation:'pulse 1.2s infinite',animationDelay:j*.2+'s'}}/>)}</div><span style={{fontSize:12,color:gf(.7),fontStyle:'italic'}}>{phases[phase]}</span></div></div>}
+          {status==='loading'&&<div style={{display:'flex',gap:10}}><div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#c4a464,#8b6914)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontStyle:'italic',fontWeight:'700',color:'#fff'}}>Lx</div><div style={{padding:'10px 16px',background:gf(.08),border:`1px solid ${gf(.2)}`,borderRadius:'3px 14px 14px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{display:'flex',gap:4}}>{[0,1,2].map(j=><div key={j} style={{width:5,height:5,borderRadius:'50%',background:gold,animation:'pulse 1.2s infinite',animationDelay:`${j*.2}s`}}/>)}</div><span style={{fontSize:12,color:gf(.7),fontStyle:'italic'}}>{phases[phase]}</span></div></div>}
           <div ref={endRef}/>
         </div>
-        <div style={{borderTop:'1px solid '+gf(.15),paddingTop:12,paddingBottom:14}}>
+        <div style={{borderTop:`1px solid ${gf(.15)}`,paddingTop:12,paddingBottom:14}}>
           {messages.length>0&&<div style={{display:'flex',justifyContent:'flex-end',marginBottom:6}}><button onClick={()=>setMessages([])} style={{background:'none',border:'none',color:'#8a9ab0',cursor:'pointer',fontSize:11}}>{IC.reset} {lang==='fr'?'Nouvelle conversation':'New conversation'}</button></div>}
           <div style={{display:'flex',gap:8,alignItems:'flex-end'}}>
-            <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder={T.placeholder} rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:'1px solid '+gf(.35),borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
+            <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder={T.placeholder} rows={2} style={{flex:1,padding:'10px 13px',background:'rgba(255,255,255,.05)',border:`1px solid ${gf(.35)}`,borderRadius:10,color:'#e8dcc8',fontSize:13,resize:'none',outline:'none',fontFamily:'Georgia,serif'}}/>
             <button onClick={()=>send()} disabled={status==='loading'||status==='streaming'||!input.trim()} style={{padding:'10px 16px',background:!input.trim()||status==='loading'||status==='streaming'?gf(.1):'linear-gradient(135deg,#c4a464,#8b6914)',border:'none',borderRadius:10,color:!input.trim()||status==='loading'||status==='streaming'?'#5a6a7a':'#fff',cursor:'pointer',fontSize:16,flexShrink:0}}>{IC.send}</button>
           </div>
           <div style={{textAlign:'center',paddingBottom:4}}><div style={{display:'flex',justifyContent:'center',gap:20,marginBottom:6}}><a href='https://www.tiktok.com/@alexia.ohada' target='_blank' rel='noopener' style={{color:'#b8a88a',textDecoration:'none',display:'flex',alignItems:'center',gap:5,fontSize:11}}><svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor'><path d='M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.19 8.19 0 004.79 1.53V6.78a4.85 4.85 0 01-1.02-.09z'/></svg>TikTok</a><a href='https://www.youtube.com/@LexIACopilotFiscal' target='_blank' rel='noopener' style={{color:'#b8a88a',textDecoration:'none',display:'flex',alignItems:'center',gap:5,fontSize:11}}><svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor'><path d='M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 00.5 6.19C0 8.04 0 12 0 12s0 3.96.5 5.81a3.02 3.02 0 002.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 002.12-2.14C24 15.96 24 12 24 12s0-3.96-.5-5.81zM9.75 15.52V8.48L15.5 12l-5.75 3.52z'/></svg>YouTube</a></div><div style={{fontSize:10,color:'#5a6a7a'}}>🇺🇸 🇹🇬 🇸🇳 LexIA by Falcon Accounting & Tax Solutions · USA</div></div>
