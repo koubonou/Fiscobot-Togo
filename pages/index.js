@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+const SU='https://fbwidkeamnwqkskxqqdu.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZid2lka2VhbW53cWtza3hxcWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0ODE5NDYsImV4cCI6MjA5MDA1Nzk0Nn0.P_MRuanbQqf1AKYgtvgQ-OiqJNCgTKVzuDkwTFed-Yk';
 import { Analytics } from '@vercel/analytics/react';
 import { searchKB, KB_N } from '../lib/kb';
 import { searchKB2025, KB_2025_N } from '../lib/kb_cahier2025';
@@ -117,6 +119,12 @@ export default function LexIA() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState('idle');
+  const [email, setEmail] = useState('');
+  const [sent, setSent] = useState(false);
+  const [user, setUser] = useState(null);
+  const [qLeft, setQLeft] = useState(5);
+  const [plan, setPlan] = useState('free');
+  const [authReady, setAuthReady] = useState(false);
   const [phase, setPhase] = useState(0);
   const [extraDocs, setExtraDocs] = useState('');
   const [showDocs, setShowDocs] = useState(false);
@@ -164,6 +172,7 @@ export default function LexIA() {
   const send = async (q) => {
     const question = q || input.trim();
     if (!question || status==='loading' || status==='streaming') return;
+    if(plan!=='pro'&&qLeft<=0){alert('Limite atteinte. Revenez demain.');return;}
     setInput(''); setStatus('loading'); setPhase(0);
     timerRef.current = setInterval(() => setPhase(p=>(p+1)%phases.length), 2200);
     const prevMsgs = messages.slice(-8).map(function(m){ return {role:m.role,content:typeof m.content==='string'?m.content.slice(-1000):''};});
@@ -210,6 +219,7 @@ export default function LexIA() {
         }
       }
       if (!fullText) throw new Error(lang==='fr'?'R\u00e9ponse vide.':'Empty response.');
+      addQ();
       setStatus('idle');
     } catch(err) {
       clearInterval(timerRef.current);
@@ -220,6 +230,15 @@ export default function LexIA() {
 
   const gold = '#c4a464';
   const gf = o => `rgba(196,164,100,${o})`;
+
+  useEffect(function(){var s=localStorage.getItem('lx_email');if(s){setUser(s);loadQ(s);}else{setAuthReady(true);}},[]);
+  function loadQ(em){var today=new Date().toISOString().split('T')[0];fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(em),{headers:{'apikey':SK,'Authorization':'Bearer '+SK}}).then(function(r){return r.json();}).then(function(d){if(d&&d[0]){var u=d[0];var lim=u.plan==='pro'?999:5;var used=u.last_reset===today?(u.questions_today||0):0;setPlan(u.plan||'free');setQLeft(Math.max(0,lim-used));}else{fetch(SU+'/rest/v1/lexia_users',{method:'POST',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},body:JSON.stringify({email:em,plan:'free',questions_today:0,last_reset:today,daily_limit:5})});setQLeft(5);}setAuthReady(true);}).catch(function(){setAuthReady(true);});}
+  function doLogin(e){e.preventDefault();if(!email)return;fetch(SU+'/auth/v1/otp',{method:'POST',headers:{'apikey':SK,'Content-Type':'application/json'},body:JSON.stringify({email:email,create_user:true})}).then(function(){setSent(true);});}
+  function doLogout(){localStorage.removeItem('lx_email');setUser(null);setQLeft(5);setPlan('free');}
+  function addQ(){if(!user)return;var today=new Date().toISOString().split('T')[0];fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(user),{headers:{'apikey':SK,'Authorization':'Bearer '+SK}}).then(function(r){return r.json();}).then(function(d){if(d&&d[0]){var u=d[0];var used=u.last_reset===today?(u.questions_today||0)+1:1;fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(user),{method:'PATCH',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},body:JSON.stringify({questions_today:used,last_reset:today})});var lim=plan==='pro'?999:5;setQLeft(Math.max(0,lim-used));}});}
+
+  if(!authReady)return React.createElement('div',{style:{minHeight:'100vh',background:'#0d1b2a',display:'flex',alignItems:'center',justifyContent:'center'}},React.createElement('div',{style:{color:'#c4a464'}},'Chargement...'));
+  if(!user)return React.createElement('div',{style:{minHeight:'100vh',background:'#0d1b2a',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Georgia,serif'}},React.createElement('div',{style:{background:'rgba(255,255,255,.04)',border:'1px solid rgba(196,164,100,.2)',borderRadius:16,padding:'40px 36px',maxWidth:400,width:'90%',textAlign:'center'}},React.createElement('div',{style:{fontSize:36,fontStyle:'italic',color:'#c4a464',marginBottom:4}},'Lx'),React.createElement('div',{style:{fontSize:20,fontWeight:700,color:'#e8dcc8',marginBottom:8}},'LexIA'),React.createElement('div',{style:{fontSize:13,color:'#8a9ab5',marginBottom:28}},'Intelligence fiscale OHADA'),sent?React.createElement('div',null,React.createElement('div',{style:{fontSize:40,marginBottom:16}},'\u{1F4E7}'),React.createElement('div',{style:{color:'#e8dcc8',fontSize:14,marginBottom:8}},'Lien envoye a ',React.createElement('strong',{style:{color:'#c4a464'}},email)),React.createElement('div',{style:{color:'#8a9ab5',fontSize:12,marginBottom:16}},'Cliquez le lien dans votre email.'),React.createElement('button',{onClick:function(){setSent(false);},style:{background:'transparent',border:'1px solid rgba(196,164,100,.3)',color:'#c4a464',padding:'8px 16px',borderRadius:6,cursor:'pointer',fontSize:12}},'Changer email')):React.createElement('form',{onSubmit:doLogin},React.createElement('input',{type:'email',placeholder:'Votre email',value:email,onChange:function(e){setEmail(e.target.value);},required:true,style:{width:'100%',padding:'12px 14px',borderRadius:8,border:'1px solid rgba(196,164,100,.3)',background:'rgba(255,255,255,.06)',color:'#e8dcc8',fontSize:13,marginBottom:12,boxSizing:'border-box',outline:'none'}}),React.createElement('button',{type:'submit',style:{width:'100%',padding:'12px',borderRadius:8,background:'#c4a464',border:'none',color:'#0d1b2a',fontWeight:700,fontSize:14,cursor:'pointer'}},'Recevoir mon lien de connexion'),React.createElement('div',{style:{fontSize:11,color:'#5a6a7a',marginTop:12}},'Gratuit 5 questions/jour Sans mot de passe'))));
 
   return (
     <div style={{fontFamily:'Georgia,serif',background:'linear-gradient(135deg,#0f1923,#1a2a3a)',minHeight:'100vh',color:'#e8dcc8',display:'flex',flexDirection:'column'}}>
