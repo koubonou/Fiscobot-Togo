@@ -237,8 +237,29 @@ export default function LexIA() {
   function doLogout(){localStorage.removeItem('lx_email');setUser(null);setQLeft(5);setPlan('free');}
   function addQ(){if(!user)return;var today=new Date().toISOString().split('T')[0];fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(user),{headers:{'apikey':SK,'Authorization':'Bearer '+SK}}).then(function(r){return r.json();}).then(function(d){if(d&&d[0]){var u=d[0];var used=u.last_reset===today?(u.questions_today||0)+1:1;fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(user),{method:'PATCH',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},body:JSON.stringify({questions_today:used,last_reset:today})});var lim=plan==='pro'?999:5;setQLeft(Math.max(0,lim-used));}});}
 
-  if(!authReady)return React.createElement('div',{style:{minHeight:'100vh',background:'#0d1b2a',display:'flex',alignItems:'center',justifyContent:'center'}},React.createElement('div',{style:{color:'#c4a464'}},'Chargement...'));
-  if(!user)return React.createElement('div',{style:{minHeight:'100vh',background:'#0d1b2a',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Georgia,serif'}},React.createElement('div',{style:{background:'rgba(255,255,255,.04)',border:'1px solid rgba(196,164,100,.2)',borderRadius:16,padding:'40px 36px',maxWidth:400,width:'90%',textAlign:'center'}},React.createElement('div',{style:{fontSize:36,fontStyle:'italic',color:'#c4a464',marginBottom:4}},'Lx'),React.createElement('div',{style:{fontSize:20,fontWeight:700,color:'#e8dcc8',marginBottom:8}},'LexIA'),React.createElement('div',{style:{fontSize:13,color:'#8a9ab5',marginBottom:28}},'Intelligence fiscale OHADA'),sent?React.createElement('div',null,React.createElement('div',{style:{fontSize:40,marginBottom:16}},'\u{1F4E7}'),React.createElement('div',{style:{color:'#e8dcc8',fontSize:14,marginBottom:8}},'Lien envoye a ',React.createElement('strong',{style:{color:'#c4a464'}},email)),React.createElement('div',{style:{color:'#8a9ab5',fontSize:12,marginBottom:16}},'Cliquez le lien dans votre email.'),React.createElement('button',{onClick:function(){setSent(false);},style:{background:'transparent',border:'1px solid rgba(196,164,100,.3)',color:'#c4a464',padding:'8px 16px',borderRadius:6,cursor:'pointer',fontSize:12}},'Changer email')):React.createElement('form',{onSubmit:doLogin},React.createElement('input',{type:'email',placeholder:'Votre email',value:email,onChange:function(e){setEmail(e.target.value);},required:true,style:{width:'100%',padding:'12px 14px',borderRadius:8,border:'1px solid rgba(196,164,100,.3)',background:'rgba(255,255,255,.06)',color:'#e8dcc8',fontSize:13,marginBottom:12,boxSizing:'border-box',outline:'none'}}),React.createElement('button',{type:'submit',style:{width:'100%',padding:'12px',borderRadius:8,background:'#c4a464',border:'none',color:'#0d1b2a',fontWeight:700,fontSize:14,cursor:'pointer'}},'Recevoir mon lien de connexion'),React.createElement('div',{style:{fontSize:11,color:'#5a6a7a',marginTop:12}},'Gratuit 5 questions/jour Sans mot de passe'))));
+  if(!authReady)return(<div style={{minHeight:"100vh",background:"#0d1b2a",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#c4a464"}}>Chargement...</span></div>);
+  if(!user)return(
+    <div style={{minHeight:"100vh",background:"#0d1b2a",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(196,164,100,.2)",borderRadius:16,padding:"40px 36px",maxWidth:400,width:"90%",textAlign:"center"}}>
+        <div style={{fontSize:36,fontStyle:"italic",color:"#c4a464",marginBottom:4}}>Lx</div>
+        <div style={{fontSize:20,fontWeight:700,color:"#e8dcc8",marginBottom:8}}>LexIA</div>
+        <div style={{fontSize:13,color:"#8a9ab5",marginBottom:28}}>Intelligence fiscale OHADA</div>
+        {sent?(
+          <div>
+            <div style={{fontSize:14,color:"#e8dcc8",marginBottom:8}}>Lien envoye a <strong style={{color:"#c4a464"}}>{email}</strong></div>
+            <div style={{fontSize:12,color:"#8a9ab5",marginBottom:16}}>Cliquez le lien dans votre email.</div>
+            <button onClick={function(){setSent(false);}} style={{background:"transparent",border:"1px solid rgba(196,164,100,.3)",color:"#c4a464",padding:"8px 16px",borderRadius:6,cursor:"pointer",fontSize:12}}>Changer email</button>
+          </div>
+        ):(
+          <form onSubmit={doLogin}>
+            <input type="email" placeholder="Votre email" value={email} onChange={function(e){setEmail(e.target.value);}} required style={{width:"100%",padding:"12px 14px",borderRadius:8,border:"1px solid rgba(196,164,100,.3)",background:"rgba(255,255,255,.06)",color:"#e8dcc8",fontSize:13,marginBottom:12,boxSizing:"border-box",outline:"none"}} />
+            <button type="submit" style={{width:"100%",padding:"12px",borderRadius:8,background:"#c4a464",border:"none",color:"#0d1b2a",fontWeight:700,fontSize:14,cursor:"pointer"}}>Recevoir mon lien de connexion</button>
+            <div style={{fontSize:11,color:"#5a6a7a",marginTop:12}}>Gratuit - 5 questions/jour</div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div style={{fontFamily:'Georgia,serif',background:'linear-gradient(135deg,#0f1923,#1a2a3a)',minHeight:'100vh',color:'#e8dcc8',display:'flex',flexDirection:'column'}}>
