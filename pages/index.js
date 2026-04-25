@@ -232,26 +232,31 @@ export default function LexIA() {
   const gf = o => `rgba(196,164,100,${o})`;
 
   useEffect(function(){
-      var hash=window.location.hash;
-      if(hash&&hash.includes('access_token')){
-        var params=new URLSearchParams(hash.replace('#','?'));
-        var token=params.get('access_token');
-        if(token){
-          fetch(SU+'/auth/v1/user',{headers:{'apikey':SK,'Authorization':'Bearer '+token}})
-            .then(function(r){return r.json();})
-            .then(function(d){
-              if(d&&d.email){
-                localStorage.setItem('lx_email',d.email);
-                setUser(d.email);loadQ(d.email);
-                window.history.replaceState(null,'',window.location.pathname);
-              }else{setAuthReady(true);}
-            }).catch(function(){setAuthReady(true);});
-          return;
-        }
+    var t=setTimeout(function(){setAuthReady(true);},3000);
+    var hash=window.location.hash;
+    if(hash&&hash.includes('access_token')){
+      var p=new URLSearchParams(hash.replace('#','?'));
+      var tok=p.get('access_token');
+      if(tok){
+        fetch(SU+'/auth/v1/user',{headers:{'apikey':SK,'Authorization':'Bearer '+tok}})
+          .then(r=>r.json())
+          .then(d=>{
+            clearTimeout(t);
+            if(d&&d.email){
+              try{localStorage.setItem('lx_email',d.email);}catch(e){}
+              setUser(d.email);loadQ(d.email);
+              window.history.replaceState(null,'',window.location.pathname);
+            }else setAuthReady(true);
+          }).catch(()=>{clearTimeout(t);setAuthReady(true);});
+        return;
       }
+    }
+    try{
       var s=localStorage.getItem('lx_email');
-      if(s){setUser(s);loadQ(s);}else{setAuthReady(true);}
-    },[]);
+      if(s){clearTimeout(t);setUser(s);loadQ(s);}
+      else{clearTimeout(t);setAuthReady(true);}
+    }catch(e){clearTimeout(t);setAuthReady(true);}
+  },[]);
   function loadQ(em){var today=new Date().toISOString().split('T')[0];fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(em),{headers:{'apikey':SK,'Authorization':'Bearer '+SK}}).then(function(r){return r.json();}).then(function(d){if(d&&d[0]){var u=d[0];var lim=u.plan==='pro'?999:5;var used=u.last_reset===today?(u.questions_today||0):0;setPlan(u.plan||'free');setQLeft(Math.max(0,lim-used));}else{fetch(SU+'/rest/v1/lexia_users',{method:'POST',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},body:JSON.stringify({email:em,plan:'free',questions_today:0,last_reset:today,daily_limit:5})});setQLeft(5);}setAuthReady(true);}).catch(function(){setAuthReady(true);});}
   function doLogin(e){e.preventDefault();if(!email)return;fetch(SU+'/auth/v1/otp',{method:'POST',headers:{'apikey':SK,'Content-Type':'application/json'},body:JSON.stringify({email:email,create_user:true})}).then(function(){setSent(true);});}
   function doLogout(){localStorage.removeItem('lx_email');setUser(null);setQLeft(5);setPlan('free');}
