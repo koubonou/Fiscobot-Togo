@@ -294,6 +294,10 @@ export default function LexIA() {
               <button type="submit" style={{width:"100%",padding:"16px",borderRadius:12,background:"linear-gradient(135deg,#c4a464,#8b6914)",border:"none",color:"#0d1b2a",fontWeight:700,fontSize:15,cursor:"pointer"}}>Recevoir mon lien de connexion</button>
               <div style={{textAlign:"center",fontSize:12,color:"#4a6478"}}>Gratuit - 5 questions/jour - Sans mot de passe</div>
             </form>
+            <div style={{marginTop:20,paddingTop:16,borderTop:"1px solid rgba(196,164,100,.15)"}}>
+              <div style={{fontSize:12,color:"#8a9ab5",marginBottom:8}}>Acces illimite - Plan Pro</div>
+              <a href="https://wa.me/12404082837?text=Bonjour%2C%20je%20souhaite%20acceder%20au%20Plan%20Pro%20LexIA" target="_blank" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,width:"100%",padding:"10px 12px",borderRadius:8,background:"#25D366",border:"none",color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",textDecoration:"none",boxSizing:"border-box"}}>WhatsApp - Passer Pro</a>
+            </div>
           )}
         </div>
       </div>
