@@ -172,7 +172,6 @@ export default function LexIA() {
   const send = async (q) => {
     const question = q || input.trim();
     if (!question || status==='loading' || status==='streaming') return;
-    if(plan!=='pro'&&qLeft<=0){alert('Limite atteinte. Revenez demain.');return;}
     setInput(''); setStatus('loading'); setPhase(0);
     timerRef.current = setInterval(() => setPhase(p=>(p+1)%phases.length), 2200);
     const prevMsgs = messages.slice(-8).map(function(m){ return {role:m.role,content:typeof m.content==='string'?m.content.slice(-1000):''};});
@@ -232,30 +231,8 @@ export default function LexIA() {
   const gf = o => `rgba(196,164,100,${o})`;
 
   useEffect(function(){
-    var t=setTimeout(function(){setAuthReady(true);},3000);
-    var hash=window.location.hash;
-    if(hash&&hash.includes('access_token')){
-      var p=new URLSearchParams(hash.replace('#','?'));
-      var tok=p.get('access_token');
-      if(tok){
-        fetch(SU+'/auth/v1/user',{headers:{'apikey':SK,'Authorization':'Bearer '+tok}})
-          .then(r=>r.json())
-          .then(d=>{
-            clearTimeout(t);
-            if(d&&d.email){
-              try{localStorage.setItem('lx_email',d.email);}catch(e){}
-              setUser(d.email);loadQ(d.email);
-              window.history.replaceState(null,'',window.location.pathname);
-            }else setAuthReady(true);
-          }).catch(()=>{clearTimeout(t);setAuthReady(true);});
-        return;
-      }
-    }
-    try{
-      var s=localStorage.getItem('lx_email');
-      if(s){clearTimeout(t);setUser(s);loadQ(s);}
-      else{clearTimeout(t);setAuthReady(true);}
-    }catch(e){clearTimeout(t);setAuthReady(true);}
+    setAuthReady(true);
+    setUser('guest');
   },[]);
   function loadQ(em){var today=new Date().toISOString().split('T')[0];fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(em),{headers:{'apikey':SK,'Authorization':'Bearer '+SK}}).then(function(r){return r.json();}).then(function(d){if(d&&d[0]){var u=d[0];var lim=u.plan==='pro'?999:5;var used=u.last_reset===today?(u.questions_today||0):0;setPlan(u.plan||'free');setQLeft(Math.max(0,lim-used));}else{fetch(SU+'/rest/v1/lexia_users',{method:'POST',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},body:JSON.stringify({email:em,plan:'free',questions_today:0,last_reset:today,daily_limit:5})});setQLeft(5);}setAuthReady(true);}).catch(function(){setAuthReady(true);});}
   function doLogin(e){e.preventDefault();if(!email)return;fetch(SU+'/auth/v1/otp',{method:'POST',headers:{'apikey':SK,'Content-Type':'application/json'},body:JSON.stringify({email:email,create_user:true})}).then(function(){setSent(true);});}
@@ -263,7 +240,7 @@ export default function LexIA() {
   function addQ(){if(!user)return;var today=new Date().toISOString().split('T')[0];fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(user),{headers:{'apikey':SK,'Authorization':'Bearer '+SK}}).then(function(r){return r.json();}).then(function(d){if(d&&d[0]){var u=d[0];var used=u.last_reset===today?(u.questions_today||0)+1:1;fetch(SU+'/rest/v1/lexia_users?email=eq.'+encodeURIComponent(user),{method:'PATCH',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},body:JSON.stringify({questions_today:used,last_reset:today})});var lim=plan==='pro'?999:5;setQLeft(Math.max(0,lim-used));}});}
 
   if(!authReady)return(<div style={{minHeight:"100vh",background:"#0d1b2a",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#c4a464"}}>Chargement...</span></div>);
-  if(!user)return(
+  if(false&&!user)return(
     <div style={{minHeight:"100vh",background:"#0d1b2a",display:"flex",flexDirection:"column",fontFamily:"Georgia,serif"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 24px",borderBottom:"1px solid rgba(196,164,100,.15)",background:"rgba(13,27,42,.95)"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
