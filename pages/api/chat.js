@@ -38,7 +38,7 @@ export default async function handler(req, res) {
   if (question) logQuestion(question, country, lang);
 
   const apiBody = {
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 3000,
     system: system,
     messages: messages,
