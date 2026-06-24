@@ -113,6 +113,157 @@ async function extractPdfText(file) {
   return text;
 }
 
+function parseMarkdown(text) {
+  if (!text) return '';
+  var lines = text.split('\n');
+  var result = [];
+  var i = 0;
+  while (i < lines.length) {
+    var line = lines[i];
+    // Detect table block
+    if (line.trim().startsWith('|') && i + 1 < lines.length && lines[i+1].trim().match(/^[|\s\-:]+$/)) {
+      var tableLines = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      var header = tableLines[0].split('|').filter(function(c){return c.trim()!='';}).map(function(c){return '<th style="padding:8px 12px;text-align:left;border-bottom:2px solid rgba(196,164,100,.4);color:#c4a464;font-weight:700;white-space:nowrap;">'+c.trim()+'</th>';}).join('');
+      var rows = tableLines.slice(2).map(function(row){
+        var cells = row.split('|').filter(function(c){return c.trim()!='';}).map(function(c){return '<td style="padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.06);color:#e8dcc8;">'+c.trim()+'</td>';}).join('');
+        return '<tr>'+cells+'</tr>';
+      }).join('');
+      result.push('<div style="overflow-x:auto;margin:12px 0;"><table style="width:100%;border-collapse:collapse;font-size:13px;background:rgba(255,255,255,.03);border-radius:8px;overflow:hidden;"><thead><tr>'+header+'</tr></thead><tbody>'+rows+'</tbody></table></div>');
+      continue;
+    }
+    // Headings
+    if (line.startsWith('### ')) { result.push('<div style="font-size:13px;font-weight:700;color:#c4a464;margin:14px 0 4px;">'+line.slice(4)+'</div>'); i++; continue; }
+    if (line.startsWith('## ')) { result.push('<div style="font-size:14px;font-weight:700;color:#c4a464;margin:16px 0 6px;border-bottom:1px solid rgba(196,164,100,.2);padding-bottom:4px;">'+line.slice(3)+'</div>'); i++; continue; }
+    if (line.startsWith('# ')) { result.push('<div style="font-size:15px;font-weight:700;color:#c4a464;margin:16px 0 8px;">'+line.slice(2)+'</div>'); i++; continue; }
+    // Bold inline
+    var formatted = line
+      .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#e8dcc8;">$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/^- /, '<span style="color:#c4a464;margin-right:6px;">•</span>');
+    if (line.trim() === '') { result.push('<div style="height:8px;"></div>'); }
+    else { result.push('<div style="line-height:1.65;margin:2px 0;">'+formatted+'</div>'); }
+    i++;
+  }
+  return result.join('');
+}mport { useState, useRef, useEffect } from 'react';
+const SU='https://fbwidkeamnwqkskxqqdu.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZid2lka2VhbW53cWtza3hxcWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0ODE5NDYsImV4cCI6MjA5MDA1Nzk0Nn0.P_MRuanbQqf1AKYgtvgQ-OiqJNCgTKVzuDkwTFed-Yk';
+import { Analytics } from '@vercel/analytics/react';
+import { searchKB, KB_N } from '../lib/kb';
+import { searchKB2025, KB_2025_N } from '../lib/kb_cahier2025';
+import { searchKBLF2026, KB_LF2026_N } from '../lib/kb_lf2026';
+import { searchKBSYSCOHADA, KB_SYSCOHADA_N } from '../lib/kb_syscohada';
+import { searchKBSENEGAL, KB_SENEGAL_N } from '../lib/kb_senegal';
+import { searchKBNFPTOGO, KB_NFP_TOGO_N } from '../lib/kb_nfp_togo';
+import { searchKBNFPSENEGAL, KB_NFP_SENEGAL_N } from '../lib/kb_nfp_senegal';
+
+const ADMIN_PASSWORD = 'Cpa2026@';
+
+const IC = {
+  scale:  '\u2696\ufe0f', arrow: '\u2197', person: '\ud83d\udc64',
+  pin: '\ud83d\udccc', folder: '\ud83d\udcc2', book: '\ud83d\udcda',
+  lock: '\ud83d\udd12', send: '\u27a4', check: '\u2713',
+  warn: '\u26a0\ufe0f', hour: '\u23f3', cross: '\u274c',
+  reset: '\u21ba', dot: '\u00b7', globe: '\ud83c\udf10',
+  us: '\ud83c\uddfa\ud83c\uddf8', tg: '\ud83c\uddf9\ud83c\uddec', sn: '\ud83c\uddf8\ud83c\uddf3',
+};
+
+const COUNTRIES = {
+  tg: { flag: '\ud83c\uddf9\ud83c\uddec', name: 'Togo', badge: 'IA \u00b7 Togo 2026', badgeEN: 'AI \u00b7 Togo 2026' },
+  sn: { flag: '\ud83c\uddf8\ud83c\uddf3', name: 'S\u00e9n\u00e9gal', badge: 'IA \u00b7 S\u00e9n\u00e9gal 2026', badgeEN: 'AI \u00b7 Senegal 2026' },
+};
+
+const LANG = {
+  fr: {
+    tg: {
+      placeholder: 'Posez votre question fiscale ou comptable\u2026',
+      heroTitle: 'Votre intelligence fiscale et comptable IA à votre Service',
+      heroSub: 'CGI 2025 \u00b7 LF2026 \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
+      suggs: ['Taux IS & p\u00e9nalit\u00e9s ?','TVA \u2014 seuil & d\u00e9lais ?','SYSCOHADA \u2014 classe 6 ?','Nouveaut\u00e9s LF 2026 ?','ONG \u2014 r\u00e9gime fiscal ?','Amortissement mat\u00e9riel ?'],
+      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI Togo OTR 2025, LPF, LF2025, LF2026, SYSCOHADA 2017, OHADA, ONG/EBNL.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur otr.tg. Cite les articles. Expertise senior. Cite articles exacts. Si tu ne sais pas dis-le. Tiens compte contexte conversation.\nFORMAT: ## Titre\n**Principe**: [r\u00e8gle g\u00e9n\u00e9rale]\n**Analyse**: [application au cas pos\u00e9]\n**Exemple chiffr\u00e9 en FCFA**: [calcul r\u00e9el]\n**\u26a0\ufe0f Points de vigilance**: [erreurs courantes \u00e0 \u00e9viter]\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX',
+    },
+    sn: {
+      placeholder: 'Posez votre question fiscale ou comptable\u2026',
+      heroTitle: 'Votre intelligence fiscale et comptable IA à votre Service',
+      heroSub: 'CGI S\u00e9n\u00e9gal \u00b7 DGID \u00b7 SYSCOHADA \u00b7 R\u00e9ponses en secondes',
+      suggs: ['IS S\u00e9n\u00e9gal \u2014 taux 30% ?','TVA \u2014 seuil 50M FCFA ?','CGU \u2014 petites entreprises ?','ONG \u2014 r\u00e9gime fiscal ?','IPRES & CSS ?','Code des investissements ?'],
+      systemPrompt: 'Tu es LexIA, assistant fiscal de Falcon Audit & Consulting, sp\u00e9cialis\u00e9 CGI S\u00e9n\u00e9gal DGID 2025, UEMOA, SYSCOHADA 2017, ONG/EBNL S\u00e9n\u00e9gal.\n\nR\u00c8GLES: R\u00e9ponds en fran\u00e7ais. Utilise d\'abord les extraits. Si insuffisant, cherche sur impotsetdomaines.gouv.sn. Cite les articles. Expertise senior. Cite articles exacts. Si tu ne sais pas dis-le. Tiens compte contexte conversation.\nFORMAT: ## Titre\n**Principe**: [r\u00e8gle g\u00e9n\u00e9rale]\n**Analyse**: [application au cas pos\u00e9]\n**Exemple chiffr\u00e9 en FCFA**: [calcul r\u00e9el]\n**\u26a0\ufe0f Points de vigilance**: [erreurs courantes \u00e0 \u00e9viter]\n**\ud83d\udccc R\u00e9f\u00e9rences**: Art. XX | DGID',
+    },
+  },
+  en: {
+    tg: {
+      placeholder: 'Ask your tax or accounting question\u2026',
+      heroTitle: 'Your AI tax & accounting expert',
+      heroSub: 'CGI 2025 \u00b7 LF2026 \u00b7 SYSCOHADA \u00b7 Answers in seconds',
+      suggs: ['Corporate tax & penalties?','VAT threshold & deadlines?','SYSCOHADA class 6?','New LF 2026 measures?','NGO tax regime?','Equipment depreciation?'],
+      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Togo CGI OTR 2025, Finance Laws 2025/2026, SYSCOHADA 2017, OHADA, NGO/EBNL.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search otr.tg. Cite exact articles. Senior expertise. Always cite exact articles. If unsure say so. Use conversation context.\nFORMAT: ## Title\n**Principle**: [general rule]\n**Analysis**: [application to case]\n**Numerical example in FCFA**: [real calculation]\n**\u26a0\ufe0f Watch out**: [common mistakes]\n**\ud83d\udccc References**: Art. XX',
+    },
+    sn: {
+      placeholder: 'Ask your tax or accounting question\u2026',
+      heroTitle: 'Your AI tax & accounting expert',
+      heroSub: 'Senegal CGI \u00b7 DGID \u00b7 SYSCOHADA \u00b7 Answers in seconds',
+      suggs: ['Corporate tax Senegal 30%?','VAT 50M FCFA threshold?','CGU small business regime?','NGO tax regime?','IPRES & CSS contributions?','Investment Code?'],
+      systemPrompt: 'You are LexIA, tax assistant from Falcon Audit & Consulting, specializing in Senegal CGI DGID 2025, UEMOA, SYSCOHADA 2017, NGO/EBNL Senegal.\n\nRULES: Answer in English. Use excerpts first. If insufficient, search impotsetdomaines.gouv.sn. Cite exact articles. Senior expertise. Always cite exact articles. If unsure say so. Use conversation context.\nFORMAT: ## Title\n**Principle**: [general rule]\n**Analysis**: [application to case]\n**Numerical example in FCFA**: [real calculation]\n**\u26a0\ufe0f Watch out**: [common mistakes]\n**\ud83d\udccc References**: Art. XX | DGID',
+    },
+  },
+};
+
+const EXPAND = {
+  'tva':'TVA taxe valeur ajout\u00e9e d\u00e9claration seuil 4441 4452 VAT',
+  'vat':'TVA taxe valeur ajout\u00e9e d\u00e9claration seuil 4441 4452',
+  'is':'imp\u00f4t soci\u00e9t\u00e9s IS taux 871 corporate tax',
+  'irpp':'IRPP imp\u00f4t revenu personnes physiques 872',
+  'retenue':'retenue source salaires dividendes withholding',
+  'penalite':'p\u00e9nalit\u00e9s amende majoration retard',
+  'p\u00e9nalit\u00e9':'p\u00e9nalit\u00e9s amende majoration retard',
+  'penalty':'p\u00e9nalit\u00e9s amende majoration retard',
+  'rescrit':'rescrit fiscal OTR r\u00e9ponse ruling',
+  'ohada':'OHADA SYSCOHADA actes uniformes',
+  'syscohada':'SYSCOHADA plan comptable classes',
+  'sycebnl':'SYCEBNL comptabilit\u00e9 ONG but non lucratif',
+  'ong':'ONG association EBNL SYCEBNL agr\u00e9ment',
+  'nfp':'ONG association EBNL SYCEBNL nonprofit',
+  'association':'association ONG EBNL SYCEBNL',
+  'nonprofit':'ONG association EBNL SYCEBNL',
+  'classe':'classe comptes SYSCOHADA',
+  'bilan':'bilan actif passif \u00e9tats financiers',
+  'amortissement':'amortissement dotation classe 2',
+  'depreciation':'amortissement dotation classe 2',
+  'cgu':'contribution globale unique petites entreprises senegal',
+  'ipres':'IPRES retraite cotisations senegal',
+  'dgid':'DGID direction impots domaines senegal',
+  'gudef':'GUDEF d\u00e9p\u00f4t \u00e9tats financiers togo',
+  'seuil':'seuil TVA 100 millions 50 millions FCFA',
+  'facture':'facturation \u00e9lectronique certifi\u00e9e',
+  'foncier':'droits enregistrement foncier',
+};
+
+function expandQuery(q) {
+  var lower = q.toLowerCase();
+  var extras = [];
+  for (var key in EXPAND) { if (lower.indexOf(key) !== -1) extras.push(EXPAND[key]); }
+  return extras.length ? q + ' ' + extras.join(' ') : q;
+}
+
+async function extractPdfText(file) {
+  const pdfjsLib = window['pdfjs-dist/build/pdf'];
+  if (!pdfjsLib) throw new Error('PDF.js non charg\u00e9');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(x => x.str).join(' ') + '\n';
+  }
+  return text;
+}
+
 function parseMarkdown(t){if(!t)return '';var h=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');h=h.replace(/^## (.+)$/gm,function(m,p){return '<div style="font-size:14px;font-weight:700;color:#c4a464;margin:10px 0 4px;border-bottom:1px solid rgba(196,164,100,.2);padding-bottom:2px">'+p+'</div>';});h=h.replace(/^### (.+)$/gm,function(m,p){return '<div style="font-size:13px;font-weight:600;color:#d4b474;margin:8px 0 3px">'+p+'</div>';});var bRe=new RegExp('[*][*](.+?)[*][*]','g');h=h.replace(bRe,function(m,p){return '<strong style="color:#e8dcc8">'+p+'</strong>';});h=h.replace(/\n\n/g,'<div style="height:5px"></div>');h=h.replace(/\n/g,'<br>');return h;}
 
 export default function LexIA() {
