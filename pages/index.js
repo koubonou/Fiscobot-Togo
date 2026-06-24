@@ -116,6 +116,55 @@ async function extractPdfText(file) {
 function parseMarkdown(text) {
   if (!text) return '';
   var lines = text.split('\n');
+  var html = '';
+  var i = 0;
+  while (i < lines.length) {
+    var line = lines[i];
+    // Detect table block
+    if (line.match(/^\|/) && i+1 < lines.length && lines[i+1].match(/^\|[-:|\s]+\|/)) {
+      var headers = line.split('|').filter(function(c){return c.trim();}).map(function(c){return '<th style="padding:8px 12px;border:1px solid rgba(196,164,100,.3);background:rgba(196,164,100,.15);color:#c4a464;font-weight:700;text-align:left;">'+c.trim()+'</th>';}).join('');
+      html += '<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;"><thead><tr>'+headers+'</tr></thead><tbody>';
+      i += 2; // skip header and separator
+      while (i < lines.length && lines[i].match(/^\|/)) {
+        var cells = lines[i].split('|').filter(function(c){return c.trim() !== '' || c !== '';}).slice(1,-1).map(function(c){return '<td style="padding:7px 12px;border:1px solid rgba(196,164,100,.15);color:#d4c4a0;">'+c.trim()+'</td>';}).join('');
+        html += '<tr>'+cells+'</tr>';
+        i++;
+      }
+      html += '</tbody></table>';
+      continue;
+    }
+    // Skip separator lines like |---|---|
+    if (line.match(/^\|[-:|\s|]+\|?$/)) { i++; continue; }
+    // H3
+    if (line.startsWith('### ')) { html += '<h3 style="color:#c4a464;font-size:14px;margin:14px 0 6px;">'+fmtInline(line.slice(4))+'</h3>'; i++; continue; }
+    // H2
+    if (line.startsWith('## ')) { html += '<h2 style="color:#c4a464;font-size:16px;margin:16px 0 8px;border-bottom:1px solid rgba(196,164,100,.3);padding-bottom:4px;">'+fmtInline(line.slice(3))+'</h2>'; i++; continue; }
+    // H1
+    if (line.startsWith('# ')) { html += '<h1 style="color:#c4a464;font-size:18px;margin:16px 0 8px;">'+fmtInline(line.slice(2))+'</h1>'; i++; continue; }
+    // Bullet
+    if (line.match(/^[\-\*] /)) { html += '<div style="display:flex;gap:8px;margin:3px 0;"><span style="color:#c4a464;flex-shrink:0;">•</span><span>'+fmtInline(line.slice(2))+'</span></div>'; i++; continue; }
+    // Numbered list
+    if (line.match(/^\d+\. /)) { var m=line.match(/^(\d+)\. (.*)/); html += '<div style="display:flex;gap:8px;margin:3px 0;"><span style="color:#c4a464;font-weight:700;flex-shrink:0;">'+m[1]+'.</span><span>'+fmtInline(m[2])+'</span></div>'; i++; continue; }
+    // Horizontal rule
+    if (line.match(/^---+$/)) { html += '<hr style="border:none;border-top:1px solid rgba(196,164,100,.2);margin:12px 0;">'; i++; continue; }
+    // Empty line
+    if (line.trim() === '') { html += '<div style="height:6px;"></div>'; i++; continue; }
+    // Normal paragraph
+    html += '<p style="margin:4px 0;line-height:1.6;">'+fmtInline(line)+'</p>';
+    i++;
+  }
+  return html;
+}
+function fmtInline(t) {
+  if(!t) return '';
+  return t
+    .replace(/\*\*([^*]+)\*\*/g,'<strong style="color:#e8dcc8;font-weight:700;">$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em style="color:#c4a464;">$1</em>')
+    .replace(/`([^`]+)`/g,'<code style="background:rgba(196,164,100,.15);color:#c4a464;padding:1px 5px;border-radius:3px;font-size:12px;font-family:monospace;">$1</code>')
+    .replace(/⚠️/g,'<span style="color:#f59e0b;">⚠️</span>');
+}nction parseMarkdown(text) {
+  if (!text) return '';
+  var lines = text.split('\n');
   var result = [];
   var i = 0;
   while (i < lines.length) {
