@@ -313,7 +313,36 @@ async function extractPdfText(file) {
   return text;
 }
 
-function parseMarkdown(t){if(!t)return '';var h=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');h=h.replace(/^## (.+)$/gm,function(m,p){return '<div style="font-size:14px;font-weight:700;color:#c4a464;margin:10px 0 4px;border-bottom:1px solid rgba(196,164,100,.2);padding-bottom:2px">'+p+'</div>';});h=h.replace(/^### (.+)$/gm,function(m,p){return '<div style="font-size:13px;font-weight:600;color:#d4b474;margin:8px 0 3px">'+p+'</div>';});var bRe=new RegExp('[*][*](.+?)[*][*]','g');h=h.replace(bRe,function(m,p){return '<strong style="color:#e8dcc8">'+p+'</strong>';});h=h.replace(/\n\n/g,'<div style="height:5px"></div>');h=h.replace(/\n/g,'<br>');return h;}
+function parseMarkdown(t){
+  if(!t)return '';
+  var h=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Render tables
+  h=h.replace(/((?:\|[^\n]+\|\n?)+)/g,function(block){
+    var lines=block.trim().split('\n'),rows=[],isFirst=true;
+    for(var i=0;i<lines.length;i++){
+      var ln=lines[i].trim();
+      if(!ln||!ln.startsWith('|'))continue;
+      if(/^\|[\s\-:|]+\|$/.test(ln))continue;
+      var cells=ln.split('|').filter(function(x,j,a){return j>0&&j<a.length-1;}).map(function(x){return x.trim();});
+      if(isFirst){
+        rows.push('<tr>'+cells.map(function(x){return '<th style="padding:7px 12px;text-align:left;color:#c4a464;font-weight:700;font-size:12px;border-bottom:1px solid rgba(196,164,100,.3)">'+x+'</th>';}).join('')+'</tr>');
+        isFirst=false;
+      }else{
+        rows.push('<tr>'+cells.map(function(x){return '<td style="padding:5px 12px;font-size:12px;color:#d8ccba;border-bottom:1px solid rgba(255,255,255,.05)">'+x+'</td>';}).join('')+'</tr>');
+      }
+    }
+    if(!rows.length)return block;
+    return '<table style="width:100%;border-collapse:collapse;margin:8px 0;background:rgba(255,255,255,.03);border-radius:6px;overflow:hidden">'+rows.join('')+'</table>';
+  });
+  h=h.replace(/^## (.+)$/gm,function(m,p){return '<div style="font-size:14px;font-weight:700;color:#c4a464;margin:10px 0 4px;border-bottom:1px solid rgba(196,164,100,.2);padding-bottom:2px">'+p+'</div>';});
+  h=h.replace(/^### (.+)$/gm,function(m,p){return '<div style="font-size:13px;font-weight:600;color:#d4b474;margin:8px 0 3px">'+p+'</div>';});
+  var bRe=new RegExp('[*][*](.+?)[*][*]','g');
+  h=h.replace(bRe,function(m,p){return '<strong style="color:#e8dcc8">'+p+'</strong>';});
+  h=h.replace(/^- (.+)$/gm,function(m,p){return '<div style="display:flex;gap:6px;margin:2px 0"><span style="color:#c4a464;flex-shrink:0">-</span><span>'+p+'</span></div>';});
+  h=h.replace(/\n\n/g,'<div style="height:6px"></div>');
+  h=h.replace(/\n/g,'<br>');
+  return h;
+}
 
 export default function LexIA() {
   const [messages, setMessages] = useState([]);
